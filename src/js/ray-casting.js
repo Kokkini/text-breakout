@@ -105,9 +105,10 @@ function castRay(startX, startY, angle, grid, maxDistance) {
  * @param {Ball} ball - Ball that is bouncing
  * @param {Grid} grid - Current grid state
  * @param {number} deviationRange - Maximum deviation in degrees
+ * @param {Object} collisionResult - Collision result with square and collision info
  * @returns {BounceAngle} BounceAngle object with calculated angle
  */
-function findOptimalBounceAngle(ball, grid, deviationRange) {
+function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult) {
     try {
         if (!(ball instanceof Ball)) {
             throw new Error('Ball must be a Ball object');
@@ -119,9 +120,36 @@ function findOptimalBounceAngle(ball, grid, deviationRange) {
             throw new Error('Deviation range must be a positive number');
         }
         
-        // Get current ball angle for perfect reflection
+        // Get current ball angle and calculate proper reflection
         const currentAngle = ball.getAngle();
-        const perfectReflection = currentAngle + Math.PI; // 180 degree reflection
+        const currentVelocityX = Math.cos(currentAngle);
+        const currentVelocityY = Math.sin(currentAngle);
+        
+        // Use the normal vector from the collision result
+        let normalX = 0, normalY = 0;
+        
+        if (collisionResult && collisionResult.normal) {
+            // Use the pre-calculated normal vector from collision detection
+            normalX = collisionResult.normal.x;
+            normalY = collisionResult.normal.y;
+        } else {
+            // Fallback: determine normal based on which component of velocity is larger
+            if (Math.abs(currentVelocityX) > Math.abs(currentVelocityY)) {
+                // Moving more horizontally - assume hitting vertical surface
+                normalX = currentVelocityX > 0 ? -1 : 1; // Opposite to movement direction
+            } else {
+                // Moving more vertically - assume hitting horizontal surface  
+                normalY = currentVelocityY > 0 ? -1 : 1; // Opposite to movement direction
+            }
+        }
+        
+        // Calculate reflection: v' = v - 2(v·n)n
+        const dotProduct = currentVelocityX * normalX + currentVelocityY * normalY;
+        const reflectedVelocityX = currentVelocityX - 2 * dotProduct * normalX;
+        const reflectedVelocityY = currentVelocityY - 2 * dotProduct * normalY;
+        
+        // Convert back to angle
+        const perfectReflection = Math.atan2(reflectedVelocityY, reflectedVelocityX);
         
         // Convert deviation range to radians
         const deviationRadians = (deviationRange * Math.PI) / 180;

@@ -66,7 +66,7 @@ function createGrid(blackWhiteImage, padding = 5) {
                         
                         const pixelIndex = imageY * blackWhiteImage.width + imageX;
                         const pixelValue = blackWhiteImage.pixels[pixelIndex];
-                        const isBlack = !pixelValue;
+                        const isBlack = pixelValue;
                         // const isBlack = pixelValue < 128; // Black text = 0, White background = 255
                         
                         // Debug: Log some pixel values to understand what we're getting
