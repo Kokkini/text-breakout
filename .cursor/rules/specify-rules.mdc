@@ -1,0 +1,25 @@
+# text-breakout Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2025-10-09
+
+## Active Technologies
+- HTML5, CSS3, JavaScript (ES6+), no build tools required + None (vanilla web technologies only) (001-text-to-image)
+
+## Project Structure
+```
+backend/
+frontend/
+tests/
+```
+
+## Commands
+npm test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] npm run lint
+
+## Code Style
+HTML5, CSS3, JavaScript (ES6+), no build tools required: Follow standard conventions
+
+## Recent Changes
+- 001-text-to-image: Added HTML5, CSS3, JavaScript (ES6+), no build tools required + None (vanilla web technologies only)
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

@@ -17,10 +17,8 @@ description: "Task list template for feature implementation"
 - Include exact file paths in descriptions
 
 ## Path Conventions
-- **Single project**: `src/`, `tests/` at repository root
-- **Web app**: `backend/src/`, `frontend/src/`
-- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
-- Paths shown below assume single project - adjust based on plan.md structure
+- **Static site**: `public/` (assets), `src/` (scripts/styles), `docs/` (guides), `tests/` (optional)
+- Paths shown below assume a single static site - adjust based on plan.md structure
 
 <!-- 
   ============================================================================
@@ -53,18 +51,18 @@ description: "Task list template for feature implementation"
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-**Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
+**Purpose**: Core static build and quality gates required before user story work
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Configure static build (bundler or none) and asset pipeline
+- [ ] T005 [P] Setup performance and accessibility checks (Lighthouse/axe)
+- [ ] T006 [P] Configure CI to fail on budget/accessibility regressions
+- [ ] T007 Establish directory layout (`public/`, `src/`, `docs/`)
+- [ ] T008 Configure security headers guidance for hosting
+- [ ] T009 Setup environment for local static preview
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -85,12 +83,12 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Create [Entity1] model in src/models/[entity1].py
-- [ ] T013 [P] [US1] Create [Entity2] model in src/models/[entity2].py
-- [ ] T014 [US1] Implement [Service] in src/services/[service].py (depends on T012, T013)
-- [ ] T015 [US1] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T016 [US1] Add validation and error handling
-- [ ] T017 [US1] Add logging for user story 1 operations
+- [ ] T012 [P] [US1] Build HTML structure in `public/[page].html`
+- [ ] T013 [P] [US1] Add CSS in `src/styles/[feature].css`
+- [ ] T014 [US1] Implement JS logic in `src/scripts/[feature].js`
+- [ ] T015 [US1] Optimize images in `public/assets/`
+- [ ] T016 [US1] Verify Lighthouse/axe pass within budgets
+- [ ] T017 [US1] Document usage in `docs/quickstart.md`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -109,10 +107,10 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Create [Entity] model in src/models/[entity].py
-- [ ] T021 [US2] Implement [Service] in src/services/[service].py
-- [ ] T022 [US2] Implement [endpoint/feature] in src/[location]/[file].py
-- [ ] T023 [US2] Integrate with User Story 1 components (if needed)
+- [ ] T020 [P] [US2] Add page/section markup in `public/`
+- [ ] T021 [US2] Extend component styles in `src/styles/`
+- [ ] T022 [US2] Enhance JS behavior in `src/scripts/`
+- [ ] T023 [US2] Reuse components from US1 where possible
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -131,9 +129,9 @@ Examples of foundational tasks (adjust based on your project):
 
 ### Implementation for User Story 3
 
-- [ ] T026 [P] [US3] Create [Entity] model in src/models/[entity].py
-- [ ] T027 [US3] Implement [Service] in src/services/[service].py
-- [ ] T028 [US3] Implement [endpoint/feature] in src/[location]/[file].py
+- [ ] T026 [P] [US3] Add content and structure in `public/`
+- [ ] T027 [US3] Progressive enhance interactions in `src/scripts/`
+- [ ] T028 [US3] Validate performance and accessibility remain within budgets
 
 **Checkpoint**: All user stories should now be independently functional
 
