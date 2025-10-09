@@ -58,6 +58,14 @@ behaviors MUST be versioned and documented in `docs/`.
 
 Rationale: Smaller surface area improves maintainability and reliability.
 
+### VI. Single Application Structure
+The project MUST maintain a single entry point at the root (`index.html`) that
+integrates all functionality. Features MUST be built upon existing application
+structure rather than creating parallel systems or duplicate entry points.
+
+Rationale: Ensures unified user experience, reduces complexity, and maintains
+consistency with existing application patterns.
+
 ## Additional Constraints
 
 - Hosting: Any static hosting (e.g., GitHub Pages, Netlify). No server runtime.
@@ -67,6 +75,9 @@ Rationale: Smaller surface area improves maintainability and reliability.
 - Security Headers: Provide guidance for CSP, SRI for third-party scripts,
   `Referrer-Policy`, and `X-Content-Type-Options` via hosting config where
   supported.
+- Application Structure: All features MUST be integrated into the single root
+  `index.html` file. No parallel application structures or duplicate entry points
+  are permitted. New functionality MUST extend existing application patterns.
 
 ## Development Workflow
 
@@ -77,6 +88,8 @@ Rationale: Smaller surface area improves maintainability and reliability.
   viewport. Automated linting and build MUST pass.
 - Releases: Each deploy increments a project changelog entry; breaking changes
   require a migration note.
+- Structure Validation: All features MUST be verified to integrate into the single
+  root `index.html` without creating parallel application structures.
 
 ## Governance
 
@@ -89,4 +102,4 @@ Rationale: Smaller surface area improves maintainability and reliability.
   - PATCH for clarifications without semantic impact.
 - Compliance: PR reviewers MUST gate on the Core Principles and Constraints.
 
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): Original adoption date unknown | **Last Amended**: 2025-10-09
+**Version**: 1.1.0 | **Ratified**: TODO(RATIFICATION_DATE): Original adoption date unknown | **Last Amended**: 2025-01-27

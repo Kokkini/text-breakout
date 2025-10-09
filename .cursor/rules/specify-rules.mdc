@@ -4,6 +4,8 @@ Auto-generated from all feature plans. Last updated: 2025-10-09
 
 ## Active Technologies
 - HTML5, CSS3, JavaScript (ES6+), no build tools required + None (vanilla web technologies only) (001-text-to-image)
+- JavaScript ES6+ with p5.js library + p5.js (latest), HTML5 Canvas API (002-ball-create-text)
+- N/A (client-side only, no persistence) (002-ball-create-text)
 
 ## Project Structure
 ```
@@ -19,6 +21,7 @@ npm test [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNO
 HTML5, CSS3, JavaScript (ES6+), no build tools required: Follow standard conventions
 
 ## Recent Changes
+- 002-ball-create-text: Added JavaScript ES6+ with p5.js library + p5.js (latest), HTML5 Canvas API
 - 001-text-to-image: Added HTML5, CSS3, JavaScript (ES6+), no build tools required + None (vanilla web technologies only)
 
 <!-- MANUAL ADDITIONS START -->

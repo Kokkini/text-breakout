@@ -3,28 +3,70 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Text to Image</title>
+    <title>Text Breakout - Ball Create Text Animation</title>
     <link rel="stylesheet" href="./styles/main.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   </head>
   <body>
     <main class="container">
-      <h1>Text to Image</h1>
+      <h1>Text Breakout</h1>
+      <p class="subtitle">Watch balls carve out your text!</p>
+      
       <form id="text-form" aria-describedby="status" onsubmit="return false;">
         <label for="text-input">Enter text (a-z, 0-9, spaces):</label>
         <input id="text-input" name="text" type="text" maxlength="50" autocomplete="off" />
+        
+        <div class="animation-controls">
+          <div class="control-group">
+            <label for="ball-count">Ball Count:</label>
+            <input type="range" id="ball-count" min="1" max="50" value="20" />
+            <span id="ball-count-value">20</span>
+          </div>
+          
+          <div class="control-group">
+            <label for="deviation-angle">Deviation Angle:</label>
+            <input type="range" id="deviation-angle" min="1" max="45" value="20" />
+            <span id="deviation-angle-value">20°</span>
+          </div>
+          
+          <div class="control-group">
+            <label for="movement-speed">Movement Speed:</label>
+            <input type="range" id="movement-speed" min="0.1" max="5.0" step="0.1" value="1.0" />
+            <span id="movement-speed-value">1.0x</span>
+          </div>
+        </div>
+        
         <div class="actions">
-          <button id="convert-btn" type="button" disabled>Convert</button>
+          <button id="convert-btn" type="button" disabled>Convert to Image</button>
+          <button id="animate-btn" type="button" disabled>Start Animation</button>
+          <button id="stop-btn" type="button" disabled>Stop Animation</button>
+          <button id="skip-btn" type="button" disabled>Skip Animation</button>
           <button id="clear-btn" type="button">Clear</button>
         </div>
       </form>
 
       <p id="status" role="status" aria-live="polite" class="visually-hidden"></p>
 
-      <section aria-label="Output image" class="output">
+      <section aria-label="Output" class="output">
         <div id="image-output"></div>
+        <div id="animation-container" class="animation-container">
+          <!-- p5.js canvas will be inserted here -->
+        </div>
       </section>
     </main>
 
+    <!-- Core JavaScript modules -->
+    <script src="./src/js/data-models.js"></script>
+    <script src="./src/js/error-handling.js"></script>
+    <script src="./src/js/text-to-image.js"></script>
+    <script src="./src/js/grid-system.js"></script>
+    <script src="./src/js/ball-animation.js"></script>
+    <script src="./src/js/ray-casting.js"></script>
+    <script src="./src/js/ui-controls.js"></script>
+    <script src="./src/js/event-system.js"></script>
+    <script src="./src/js/performance.js"></script>
+    <script src="./src/js/validation.js"></script>
+    <script src="./src/js/main.js"></script>
     <script src="./scripts/app.js"></script>
   </body>
   </html>
