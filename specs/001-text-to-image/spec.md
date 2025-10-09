@@ -20,6 +20,7 @@
 - Q: Should the output be a single image or multiple elements? → A: A single composed image (canvas) with white background
 - Q: Should there be spacing between adjacent characters? → A: Yes, a small fixed gap between characters; larger gaps for spaces
 - Q: Should there be left/right margins in the image? → A: Yes, add a leading and trailing space to create left/right white margins
+- Q: What deployment structure is needed? → A: GitHub Pages requires index.html at root; moved from public/ to root directory
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -49,8 +50,8 @@ The system needs to handle the character images from the chars folder and map th
 
 **Acceptance Scenarios**:
 
-1. **Given** the app has loaded, **When** a user types a character that exists in the chars folder, **Then** the corresponding character image is used in the output
-2. **Given** a user types a character not in the chars folder, **When** they convert the text, **Then** the missing character is skipped entirely (removed from output)
+1. **Given** the app has loaded, **When** a user types a character that exists in the assets/chars folder, **Then** the corresponding character image is used in the output
+2. **Given** a user types a character not in the assets/chars folder, **When** they convert the text, **Then** the missing character is skipped entirely (removed from output)
 
 ---
 
@@ -82,7 +83,7 @@ Users need an intuitive interface to input text and view the generated image.
 
 - **FR-001**: System MUST provide a text input field for users to enter alphanumeric text and spaces only
 - **FR-002**: System MUST provide a convert button that triggers text-to-image generation
-- **FR-003**: System MUST load and display character images from the chars folder (a-z, 0-9)
+- **FR-003**: System MUST load and display character images from the assets/chars folder (a-z, 0-9)
 - **FR-004**: System MUST generate a single composite image (canvas) showing the input text using individual character images arranged horizontally with small gaps between adjacent characters and larger gaps for spaces, on a white background
 - **FR-005**: System MUST display the generated image prominently on the page
 - **FR-006**: System MUST handle missing character images by skipping them entirely (removing from output)

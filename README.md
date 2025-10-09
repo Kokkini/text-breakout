@@ -10,14 +10,13 @@ A static web app that converts typed text into a single composite image using pe
 - Input validation: letters, numbers, spaces (max 50 chars)
 
 ## Quick Start
-1. Open `public/index.html` in a modern browser (no build needed).
+1. Open `index.html` in a modern browser (no build needed).
 2. Type your message (a–z, 0–9, spaces).
 3. Click "Convert" to generate the image.
 4. Use "Clear" to start over.
 
 ## Project Structure
 ```
-public/
 ├── index.html
 ├── styles/
 │   └── main.css
@@ -33,8 +32,5 @@ public/
 - Accessibility: WCAG 2.1 AA (semantic HTML, keyboard operability)
 
 ## Notes
-- Character images are expected at `public/assets/chars/` (copied from `chars/`).
+- Character images are expected at `assets/chars/` (copied from `chars/`).
 - If a particular character image is missing, it is skipped in the output.
-
-## License
-MIT

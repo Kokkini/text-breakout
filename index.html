@@ -1,1 +1,32 @@
-<meta http-equiv="refresh" content="0; url=/public/index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Text to Image</title>
+    <link rel="stylesheet" href="./styles/main.css" />
+  </head>
+  <body>
+    <main class="container">
+      <h1>Text to Image</h1>
+      <form id="text-form" aria-describedby="status" onsubmit="return false;">
+        <label for="text-input">Enter text (a-z, 0-9, spaces):</label>
+        <input id="text-input" name="text" type="text" maxlength="50" autocomplete="off" />
+        <div class="actions">
+          <button id="convert-btn" type="button" disabled>Convert</button>
+          <button id="clear-btn" type="button">Clear</button>
+        </div>
+      </form>
+
+      <p id="status" role="status" aria-live="polite" class="visually-hidden"></p>
+
+      <section aria-label="Output image" class="output">
+        <div id="image-output"></div>
+      </section>
+    </main>
+
+    <script src="./scripts/app.js"></script>
+  </body>
+  </html>
+
+
