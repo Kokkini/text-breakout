@@ -282,11 +282,12 @@
         return;
       }
 
-      // Create a clean canvas with the same dimensions as the original
+      // Create a clean canvas at 1/4 resolution for better performance
       const originalCanvas = currentImage;
+      const downsampleFactor = 4;
       const canvas = document.createElement('canvas');
-      canvas.width = originalCanvas.width;
-      canvas.height = originalCanvas.height;
+      canvas.width = Math.floor(originalCanvas.width / downsampleFactor);
+      canvas.height = Math.floor(originalCanvas.height / downsampleFactor);
       const ctx = canvas.getContext('2d');
 
       console.log('Using existing canvas dimensions:', canvas.width, 'x', canvas.height);
@@ -294,23 +295,23 @@
       // Draw the image from either the img element or recreate the text
       if (imgElement) {
         console.log('onAnimate: Drawing from img element');
-        ctx.drawImage(imgElement, 0, 0);
+        ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
       } else if (canvasElement) {
         console.log('onAnimate: Recreating text on clean canvas');
         // Fill white background
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Set text properties to match the character images
+        // Set text properties scaled down for the smaller canvas
         ctx.fillStyle = '#000000';
-        ctx.font = '48px Arial';
+        ctx.font = `${48 / downsampleFactor}px Arial`; // Scale font size down
         ctx.textAlign = 'left';
         ctx.textBaseline = 'bottom';
         
-        // Get the text and recreate it with the same spacing
+        // Get the text and recreate it with scaled spacing
         const text = input.value.trim();
-        const SPACE_GAP = 16;
-        const CHAR_GAP = 4;
+        const SPACE_GAP = 16 / downsampleFactor; // Scale spacing down
+        const CHAR_GAP = 4 / downsampleFactor;   // Scale spacing down
         const characters = text.split('');
         
         let x = 0;
@@ -353,7 +354,7 @@
       // Debug: Display the grayscale image
       displayGrayscaleImage(canvas.width, canvas.height, pixels);
 
-      // Create a simple black and white image data structure
+      // Create black and white pixel array (already at low resolution)
       const blackWhitePixels = new Uint8Array(canvas.width * canvas.height);
       let blackCount = 0;
       let whiteCount = 0;
