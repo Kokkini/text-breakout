@@ -171,7 +171,7 @@ function findRaySquareIntersection(rayStartX, rayStartY, rayEndX, rayEndY, squar
  * @param {number} canvasHeight - Canvas height in pixels
  * @returns {Object} Normal vector {x, y}
  */
-function calculateCollisionNormal(ball, square, grid, canvasWidth = 800, canvasHeight = 600) {
+function calculateCollisionNormal(ball, square, grid, gridRenderingParams) {
     let normalX = 0, normalY = 0;
     
     // Check if this is an edge collision
@@ -195,14 +195,17 @@ function calculateCollisionNormal(ball, square, grid, canvasWidth = 800, canvasH
         }
     } else {
         // Square collision - use ray casting to find the actual collision point
-        const squareWidth = canvasWidth / grid.width;
-        const squareHeight = canvasHeight / grid.height;
+        if (!gridRenderingParams) {
+            console.warn('gridRenderingParams is undefined, using fallback values');
+            return { x: 0, y: 0 };
+        }
+        const { squareSize, offsetX, offsetY } = gridRenderingParams;
         
         // Convert square grid coordinates to pixel coordinates
-        const squareLeft = square.x * squareWidth;
-        const squareRight = (square.x + 1) * squareWidth;
-        const squareTop = square.y * squareHeight;
-        const squareBottom = (square.y + 1) * squareHeight;
+        const squareLeft = offsetX + (square.x * squareSize);
+        const squareRight = offsetX + ((square.x + 1) * squareSize);
+        const squareTop = offsetY + (square.y * squareSize);
+        const squareBottom = offsetY + ((square.y + 1) * squareSize);
         
         // Calculate ball's previous position (before collision)
         const ballRadius = ball.diameter / 2;
@@ -243,8 +246,8 @@ function calculateCollisionNormal(ball, square, grid, canvasWidth = 800, canvasH
             }
         } else {
             // Fallback: use ball position relative to square center
-            const ballGridX = ball.x / squareWidth;
-            const ballGridY = ball.y / squareHeight;
+            const ballGridX = (ball.x - offsetX) / squareSize;
+            const ballGridY = (ball.y - offsetY) / squareSize;
             const squareCenterX = square.x + 0.5;
             const squareCenterY = square.y + 0.5;
             
@@ -273,7 +276,7 @@ function calculateCollisionNormal(ball, square, grid, canvasWidth = 800, canvasH
  * @param {Grid} grid - Grid to check against
  * @returns {Object} CollisionResult object with collision information
  */
-function checkBallCollision(ball, grid) {
+function checkBallCollision(ball, grid, gridRenderingParams) {
     try {
         if (!(ball instanceof Ball)) {
             throw new Error('Ball must be a Ball object');
@@ -283,18 +286,17 @@ function checkBallCollision(ball, grid) {
         }
         
         // Get the square the ball is currently in
-        const square = getSquareAtPixel(grid, ball.x, ball.y, width, height);
+        const square = getSquareAtPixel(grid, ball.x, ball.y, gridRenderingParams);
         
         if (!square) {
             return { hasCollision: false };
         }
         
         // Calculate normal vector for collision
-        const normal = calculateCollisionNormal(ball, square, grid, width, height);
+        const normal = calculateCollisionNormal(ball, square, grid, gridRenderingParams);
         
         // Check collision based on square state
         if (square.state === SquareState.BLACK_CARVEABLE) {
-            console.log('Ball hit carveable square at', ball.x, ball.y, 'state:', square.state);
             return {
                 hasCollision: true,
                 square: square,
@@ -304,14 +306,13 @@ function checkBallCollision(ball, grid) {
                 shouldCarve: true
             };
         } else if (square.state === SquareState.BLACK_PROTECTED) {
-            console.log('Ball hit PROTECTED square at', ball.x, ball.y, 'state:', square.state, '- DESTROYING BALL');
             return {
                 hasCollision: true,
                 square: square,
                 isEdge: false,
                 collisionPoint: { x: ball.x, y: ball.y },
                 normal: normal,
-                shouldDestroy: true
+                shouldBounce: true
             };
         } else if (square.state === SquareState.WHITE_EDGE) {
             // Only bounce off actual grid edges, not all white edge squares
@@ -319,7 +320,6 @@ function checkBallCollision(ball, grid) {
                                     square.y === 0 || square.y === grid.height - 1);
             
             if (isAtGridBoundary) {
-                console.log('Ball hit grid boundary at', ball.x, ball.y, 'state:', square.state);
                 return {
                     hasCollision: true,
                     square: square,
@@ -355,7 +355,7 @@ function checkBallCollision(ball, grid) {
  * @param {Grid} grid - Grid being collided with
  * @returns {Object} Result of collision handling
  */
-function handleBallCollision(ball, collisionResult, grid) {
+function handleBallCollision(ball, collisionResult, grid, gridRenderingParams) {
     try {
         if (!collisionResult.hasCollision) {
             return { success: true, action: 'none' };
@@ -366,17 +366,16 @@ function handleBallCollision(ball, collisionResult, grid) {
         if (shouldCarve) {
             // Carve the square (turn black to white) and bounce
             updateSquareState(grid, square.x, square.y, SquareState.WHITE_CARVED);
-            bounceBallOffSquareSmart(ball, collisionResult, grid);
+            bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams);
             return { success: true, action: 'carved', square: square };
             
-        } else if (shouldDestroy) {
-            // Destroy the ball (no bouncing for protected squares)
-            ball.isActive = false;
-            return { success: true, action: 'destroyed', square: square };
-            
         } else if (shouldBounce) {
-            // Bounce the ball off the edge with smart ray casting
-            bounceBallOffEdgeSmart(ball, collisionResult, grid);
+            // Bounce the ball - use appropriate bounce function based on collision type
+            if (collisionResult.isEdge) {
+                bounceBallOffEdgeSmart(ball, collisionResult, grid, gridRenderingParams);
+            } else {
+                bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams);
+            }
             return { success: true, action: 'bounce', square: square };
         }
         
@@ -398,7 +397,7 @@ function handleBallCollision(ball, collisionResult, grid) {
  * @param {Object} collisionResult - Collision result with collision point
  * @param {Grid} grid - Grid for ray casting
  */
-function bounceBallOffEdgeSmart(ball, collisionResult, grid) {
+function bounceBallOffEdgeSmart(ball, collisionResult, grid, gridRenderingParams) {
     try {
         if (!ball || !collisionResult || !grid) {
             return;
@@ -409,7 +408,7 @@ function bounceBallOffEdgeSmart(ball, collisionResult, grid) {
         
         // Use smart ray casting to find optimal bounce angle
         if (typeof findOptimalBounceAngle === 'function') {
-            const bounceResult = findOptimalBounceAngle(ball, grid, deviationAngle, collisionResult);
+            const bounceResult = findOptimalBounceAngle(ball, grid, deviationAngle, collisionResult, gridRenderingParams);
             
             if (bounceResult && bounceResult.isOptimal) {
                 // Use the optimal angle found by ray casting
@@ -460,15 +459,10 @@ function bounceBallOffEdge(ball, collisionResult, grid) {
             }
         }
         
-        console.log('Edge reflection - Ball velocity before:', ball.velocityX, ball.velocityY);
-        console.log('Edge reflection - Normal:', normalX, normalY);
-        
         // Calculate reflection: v' = v - 2(v·n)n
         const dotProduct = ball.velocityX * normalX + ball.velocityY * normalY;
         ball.velocityX = ball.velocityX - 2 * dotProduct * normalX;
         ball.velocityY = ball.velocityY - 2 * dotProduct * normalY;
-        
-        console.log('Edge reflection - Ball velocity after:', ball.velocityX, ball.velocityY);
         
         // Add some randomness to prevent balls from getting stuck in patterns
         const randomFactor = 0.1;
@@ -486,7 +480,7 @@ function bounceBallOffEdge(ball, collisionResult, grid) {
  * @param {Object} collisionResult - Collision result with collision point
  * @param {Grid} grid - Grid object for ray casting
  */
-function bounceBallOffSquareSmart(ball, collisionResult, grid) {
+function bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams) {
     try {
         if (!ball || !collisionResult || !grid) {
             return;
@@ -497,7 +491,7 @@ function bounceBallOffSquareSmart(ball, collisionResult, grid) {
         
         // Use smart ray casting to find optimal bounce angle
         if (typeof findOptimalBounceAngle === 'function') {
-            const bounceResult = findOptimalBounceAngle(ball, grid, deviationAngle, collisionResult);
+            const bounceResult = findOptimalBounceAngle(ball, grid, deviationAngle, collisionResult, gridRenderingParams);
             
             if (bounceResult && bounceResult.isOptimal) {
                 // Use the optimal angle found by ray casting
@@ -575,7 +569,7 @@ function bounceBallOffSquare(ball, collisionResult) {
  * @param {AnimationParameters} parameters - Animation parameters
  * @returns {Ball|null} New ball or null if spawning failed
  */
-function spawnNewBall(grid, parameters) {
+function spawnNewBall(grid, parameters, gridRenderingParams) {
     try {
         if (!(grid instanceof Grid)) {
             throw new Error('Grid must be a Grid object');
@@ -585,9 +579,12 @@ function spawnNewBall(grid, parameters) {
         }
         
         // Calculate ball diameter (half of square edge length)
-        const squareWidth = width / grid.width;
-        const squareHeight = height / grid.height;
-        const ballDiameter = Math.min(squareWidth, squareHeight) * 0.5;
+        if (!gridRenderingParams) {
+            console.warn('gridRenderingParams is undefined in spawnNewBall, using fallback');
+            return null;
+        }
+        const { squareSize } = gridRenderingParams;
+        const ballDiameter = squareSize * 0.5;
         
         // Find a random edge position
         const edgePositions = getEdgePositions(grid);
@@ -596,7 +593,7 @@ function spawnNewBall(grid, parameters) {
         }
         
         const randomEdge = edgePositions[Math.floor(Math.random() * edgePositions.length)];
-        const pixelCoords = getSquarePixelCoordinates(grid, randomEdge.x, randomEdge.y, width, height);
+        const pixelCoords = getSquarePixelCoordinates(grid, randomEdge.x, randomEdge.y, gridRenderingParams);
         
         // Position ball at center of edge square
         const ballX = pixelCoords.x + pixelCoords.width / 2;
@@ -655,7 +652,7 @@ function getEdgePositions(grid) {
  * @param {AnimationParameters} parameters - Animation parameters
  * @returns {Array} Array of spawned balls
  */
-function spawnInitialBalls(grid, parameters) {
+function spawnInitialBalls(grid, parameters, gridRenderingParams) {
     try {
         if (!(grid instanceof Grid)) {
             throw new Error('Grid must be a Grid object');
@@ -668,7 +665,7 @@ function spawnInitialBalls(grid, parameters) {
         const ballCount = Math.min(parameters.ballCount, 50); // Limit to 50 balls max
         
         for (let i = 0; i < ballCount; i++) {
-            const ball = spawnNewBall(grid, parameters);
+            const ball = spawnNewBall(grid, parameters, gridRenderingParams);
             if (ball) {
                 balls.push(ball);
             }
@@ -691,7 +688,7 @@ function spawnInitialBalls(grid, parameters) {
  * @param {Grid} grid - Grid for collision detection
  * @returns {Object} Update results
  */
-function updateAllBalls(balls, grid) {
+function updateAllBalls(balls, grid, gridRenderingParams) {
     try {
         if (!Array.isArray(balls)) {
             throw new Error('Balls must be an array');
@@ -719,19 +716,16 @@ function updateAllBalls(balls, grid) {
             results.ballsUpdated++;
             
             // Check for collisions
-            const collisionResult = checkBallCollision(ball, grid);
+            const collisionResult = checkBallCollision(ball, grid, gridRenderingParams);
             if (collisionResult.hasCollision) {
-                const handleResult = handleBallCollision(ball, collisionResult, grid);
+                const handleResult = handleBallCollision(ball, collisionResult, grid, gridRenderingParams);
                 
                 if (handleResult.action === 'carved') {
                     results.squaresCarved++;
-                    console.log('Ball carved square at', ball.x, ball.y);
                 } else if (handleResult.action === 'destroyed') {
                     results.ballsDestroyed++;
-                    console.log('Ball destroyed at', ball.x, ball.y);
                 } else if (handleResult.action === 'bounce') {
                     results.ballsBounced++;
-                    console.log('Ball bounced at', ball.x, ball.y);
                 }
             }
         }

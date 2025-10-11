@@ -188,18 +188,25 @@ function isValidStateTransition(currentState, newState) {
  * @param {number} canvasHeight - Canvas height
  * @returns {Square|null} Square at coordinates or null
  */
-function getSquareAtPixel(grid, pixelX, pixelY, canvasWidth, canvasHeight) {
+function getSquareAtPixel(grid, pixelX, pixelY, gridRenderingParams) {
     try {
         if (!(grid instanceof Grid)) {
             throw new Error('Grid must be a Grid object');
         }
         
         // Calculate grid coordinates from pixel coordinates
-        const squareWidth = canvasWidth / grid.width;
-        const squareHeight = canvasHeight / grid.height;
+        if (!gridRenderingParams) {
+            console.warn('gridRenderingParams is undefined in getSquareAtPixel, using fallback');
+            return null;
+        }
+        const { squareSize, offsetX, offsetY } = gridRenderingParams;
         
-        const gridX = Math.floor(pixelX / squareWidth);
-        const gridY = Math.floor(pixelY / squareHeight);
+        // Adjust pixel coordinates by offset
+        const adjustedX = pixelX - offsetX;
+        const adjustedY = pixelY - offsetY;
+        
+        const gridX = Math.floor(adjustedX / squareSize);
+        const gridY = Math.floor(adjustedY / squareSize);
         
         return grid.getSquare(gridX, gridY);
         
@@ -224,7 +231,7 @@ function getSquareAtPixel(grid, pixelX, pixelY, canvasWidth, canvasHeight) {
  * @param {number} canvasHeight - Canvas height
  * @returns {Object} Pixel coordinates {x, y, width, height}
  */
-function getSquarePixelCoordinates(grid, gridX, gridY, canvasWidth, canvasHeight) {
+function getSquarePixelCoordinates(grid, gridX, gridY, gridRenderingParams) {
     try {
         if (!(grid instanceof Grid)) {
             throw new Error('Grid must be a Grid object');
@@ -232,14 +239,17 @@ function getSquarePixelCoordinates(grid, gridX, gridY, canvasWidth, canvasHeight
         
         ValidationHelper.validateCoordinates(gridX, gridY, grid.width, grid.height);
         
-        const squareWidth = canvasWidth / grid.width;
-        const squareHeight = canvasHeight / grid.height;
+        if (!gridRenderingParams) {
+            console.warn('gridRenderingParams is undefined in getSquarePixelCoordinates, using fallback');
+            return { x: 0, y: 0, width: 0, height: 0 };
+        }
+        const { squareSize, offsetX, offsetY } = gridRenderingParams;
         
         return {
-            x: gridX * squareWidth,
-            y: gridY * squareHeight,
-            width: squareWidth,
-            height: squareHeight
+            x: offsetX + (gridX * squareSize),
+            y: offsetY + (gridY * squareSize),
+            width: squareSize,
+            height: squareSize
         };
         
     } catch (error) {
@@ -421,6 +431,42 @@ function markIsolatedCarveableAsProtected(grid) {
 }
 
 /**
+ * Get grid rendering parameters that maintain aspect ratio
+ * @param {Grid} grid - Grid to render
+ * @param {number} canvasWidth - Canvas width
+ * @param {number} canvasHeight - Canvas height
+ * @returns {Object} Rendering parameters
+ */
+function getGridRenderingParams(grid, canvasWidth, canvasHeight) {
+    // Calculate aspect ratios
+    const gridAspectRatio = grid.width / grid.height;
+    const canvasAspectRatio = canvasWidth / canvasHeight;
+    
+    // Determine square size to maintain aspect ratio
+    let squareSize;
+    let offsetX = 0;
+    let offsetY = 0;
+    
+    if (gridAspectRatio > canvasAspectRatio) {
+        // Grid is wider than canvas - fit to width
+        squareSize = canvasWidth / grid.width;
+        offsetY = (canvasHeight - (grid.height * squareSize)) / 2;
+    } else {
+        // Grid is taller than canvas - fit to height
+        squareSize = canvasHeight / grid.height;
+        offsetX = (canvasWidth - (grid.width * squareSize)) / 2;
+    }
+    
+    return {
+        squareSize: squareSize,
+        offsetX: offsetX,
+        offsetY: offsetY,
+        gridWidth: grid.width,
+        gridHeight: grid.height
+    };
+}
+
+/**
  * Draw the grid on the canvas
  * @param {Grid} grid - Grid to draw
  * @param {number} canvasWidth - Canvas width
@@ -432,15 +478,16 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
             throw new Error('Grid must be a Grid object');
         }
         
-        const squareWidth = canvasWidth / grid.width;
-        const squareHeight = canvasHeight / grid.height;
+        // Get rendering parameters that maintain aspect ratio
+        const params = getGridRenderingParams(grid, canvasWidth, canvasHeight);
+        const { squareSize, offsetX, offsetY } = params;
         
         for (let y = 0; y < grid.height; y++) {
             for (let x = 0; x < grid.width; x++) {
                 const square = grid.getSquare(x, y);
                 if (square) {
-                    const pixelX = x * squareWidth;
-                    const pixelY = y * squareHeight;
+                    const pixelX = offsetX + (x * squareSize);
+                    const pixelY = offsetY + (y * squareSize);
                     
                     // Set color based on square state
                     switch (square.state) {
@@ -461,7 +508,7 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                     }
                     
                     // Draw the square
-                    rect(pixelX, pixelY, squareWidth, squareHeight);
+                    rect(pixelX, pixelY, squareSize, squareSize);
                 }
             }
         }
@@ -488,6 +535,7 @@ if (typeof window !== 'undefined') {
     window.isAdjacentToSquareType = isAdjacentToSquareType;
     window.markIsolatedCarveableAsProtected = markIsolatedCarveableAsProtected;
     window.drawGrid = drawGrid;
+    window.getGridRenderingParams = getGridRenderingParams;
 }
 
 // Export for use in other modules (Node.js)
@@ -503,6 +551,7 @@ if (typeof module !== 'undefined' && module.exports) {
         getCarveableSquaresAdjacentToProtected,
         isAdjacentToSquareType,
         markIsolatedCarveableAsProtected,
-        drawGrid
+        drawGrid,
+        getGridRenderingParams
     };
 }

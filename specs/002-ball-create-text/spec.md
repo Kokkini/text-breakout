@@ -25,6 +25,8 @@
 - Q: What font should be used for text rendering in the animation? → A: Use the Eutopia font located in assets/Eutopia/Eutopia.otf for consistent typography with the custom character images
 - Q: How should the user workflow be simplified? → A: Remove the convert to image step; users input text and directly start animation, with text rendering handled internally using the Eutopia font
 - Q: How should the canvas size be determined for text rendering? → A: Canvas size should be dynamically calculated based on the actual text dimensions to maintain proper aspect ratio and prevent text distortion
+- Q: How should white space around text be minimized? → A: Canvas should have minimal padding around the text to maximize text visibility and reduce unnecessary white space
+- Q: What should happen when balls hit protected squares (text)? → A: Balls should bounce off protected squares normally without being destroyed, maintaining the text pattern as a solid obstacle that deflects balls
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -56,8 +58,8 @@ The system needs to intelligently guide balls to carve out the correct text patt
 **Acceptance Scenarios**:
 
 1. **Given** balls are bouncing in the animation, **When** a ball bounces off an edge, **Then** the bounce angle is calculated using ray casting to find optimal trajectory toward carveable squares
-2. **Given** balls are bouncing in the animation, **When** a ball hits a black square that should not be carved, **Then** the ball is destroyed and a new ball spawns aimed at a carveable square
-3. **Given** a ball is destroyed, **When** a new ball spawns, **Then** it appears at an edge position determined by ray casting from carveable squares and aims in the ray direction
+2. **Given** balls are bouncing in the animation, **When** a ball hits a black square that should not be carved (protected text), **Then** the ball bounces off normally without being destroyed
+3. **Given** balls are bouncing in the animation, **When** a ball hits a protected square, **Then** the ball uses smart ray casting to determine the optimal bounce angle
 
 ---
 
@@ -114,9 +116,9 @@ Users want to customize the animation parameters to control the carving speed an
 - **FR-012**: System MUST use ray casting at integer angles from -X to +X degrees to find closest intersection with carveable squares (default 20 degrees, user customizable)
 - **FR-013**: System MUST use random angle within -X to +X degree range when no optimal bounce angle is found (default 20 degrees, user customizable)
 - **FR-014**: System MUST prioritize ball targeting: carveable black squares > grid edges > protected black squares
-- **FR-015**: System MUST destroy balls that hit protected black squares (text pattern squares)
-- **FR-016**: System MUST spawn new balls at edge positions when balls are destroyed using ray casting from carveable squares to find viable spawn locations
-- **FR-017**: System MUST aim new balls using ray direction from carveable squares to edge intersections as the spawn angle
+- **FR-015**: System MUST make balls bounce off protected black squares (text pattern squares) without destroying them
+- **FR-016**: System MUST use smart ray casting to determine optimal bounce angles when balls hit protected squares
+- **FR-017**: System MUST maintain protected squares as solid obstacles that deflect balls while preserving the text pattern
 - **FR-018**: System MUST check each frame if any carveable black squares remain and stop animation when none are found
 - **FR-019**: System MUST display the final text pattern when animation completes
 - **FR-020**: System MUST allow users to skip or stop the animation to see final result
@@ -127,12 +129,14 @@ Users want to customize the animation parameters to control the carving speed an
 - **FR-025**: System MUST use the Eutopia font (assets/Eutopia/Eutopia.otf) for text rendering in the animation to maintain consistent typography
 - **FR-026**: System MUST provide a simplified user workflow where users input text and directly start animation without a separate convert step
 - **FR-027**: System MUST dynamically calculate canvas dimensions based on actual text measurements to maintain proper aspect ratio and prevent text distortion
+- **FR-028**: System MUST minimize white space around text by using minimal padding to maximize text visibility and reduce unnecessary canvas area
 
 ### Key Entities *(include if feature involves data)*
 
 - **Text Input**: User-entered text that gets rendered using the Eutopia font
 - **Text Measurement**: Process of calculating actual text dimensions using font metrics to determine proper canvas size
-- **Generated Text Image**: Text image created from user input using the Eutopia font with dynamically calculated dimensions
+- **Minimal Padding**: Minimal white space around text to maximize text visibility and reduce unnecessary canvas area
+- **Generated Text Image**: Text image created from user input using the Eutopia font with dynamically calculated dimensions and minimal padding
 - **Black and White Image**: Converted binary image used to determine grid square types
 - **Grid**: 2D array of squares representing the converted image resolution with padding
 - **Ball**: Animated object with position, velocity, collision detection, and diameter equal to half the grid square edge length
@@ -147,10 +151,11 @@ Users want to customize the animation parameters to control the carving speed an
 
 ### Measurable Outcomes
 
-- **SC-001**: Balls successfully carve out 95% of non-text black squares without destroying text pattern
+- **SC-001**: Balls successfully carve out 95% of non-text black squares while bouncing off protected text squares
 - **SC-002**: Users can successfully view the final carved text pattern 100% of the time
-- **SC-003**: Ball targeting accuracy results in less than 5% of balls hitting protected text squares
+- **SC-003**: Protected text squares remain intact and visible throughout the animation, serving as solid obstacles that deflect balls
 - **SC-004**: Application maintains unified user experience with single entry point (index.html) that seamlessly integrates text input and ball animation functionality
 - **SC-005**: Text rendering in animation uses Eutopia font consistently, maintaining visual consistency
 - **SC-006**: Users can successfully start animation directly from text input without requiring a separate convert step
 - **SC-007**: Canvas dimensions are dynamically calculated to maintain proper text aspect ratio without distortion for any text length or content
+- **SC-008**: Text canvas has minimal white space around the text to maximize text visibility and reduce unnecessary canvas area

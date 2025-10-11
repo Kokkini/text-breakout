@@ -32,7 +32,7 @@ const RayCast = window.RayCast || class {
  * @param {number} maxDistance - Maximum ray distance
  * @returns {RayCast} RayCast object with intersection data
  */
-function castRay(startX, startY, angle, grid, maxDistance) {
+function castRay(startX, startY, angle, grid, maxDistance, gridRenderingParams) {
     try {
         if (typeof startX !== 'number' || !isFinite(startX)) {
             throw new Error('Start X must be a finite number');
@@ -65,7 +65,7 @@ function castRay(startX, startY, angle, grid, maxDistance) {
             const y = startY + dy * distance;
             
             // Get the square at this position
-            const square = getSquareAtPixel(grid, x, y, 800, 600); // Assuming 800x600 canvas
+            const square = getSquareAtPixel(grid, x, y, gridRenderingParams);
             
             if (square) {
                 // Found an intersection
@@ -108,7 +108,7 @@ function castRay(startX, startY, angle, grid, maxDistance) {
  * @param {Object} collisionResult - Collision result with square and collision info
  * @returns {BounceAngle} BounceAngle object with calculated angle
  */
-function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult) {
+function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult, gridRenderingParams) {
     try {
         if (!(ball instanceof Ball)) {
             throw new Error('Ball must be a Ball object');
@@ -165,7 +165,7 @@ function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult) {
             
             for (const testAngle of angles) {
                 // Cast ray at this angle to see what it hits
-                const rayResult = castRay(ball.x, ball.y, testAngle, grid, 100);
+                const rayResult = castRay(ball.x, ball.y, testAngle, grid, 100, gridRenderingParams);
                 
                 // Check if this ray hits a carveable square
                 if (rayResult.intersections && rayResult.intersections.length > 0) {

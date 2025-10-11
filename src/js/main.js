@@ -119,6 +119,7 @@ let grid = null;
 let animationParameters = null;
 let canvasWidth = 800;
 let canvasHeight = 600;
+let gridRenderingParams = null; // Will store current grid rendering parameters
 
 /**
  * p5.js setup function - called once when the program starts
@@ -167,6 +168,21 @@ function draw() {
             
             // Draw grid
             if (grid) {
+                // Calculate and store grid rendering parameters
+                if (typeof getGridRenderingParams === 'function') {
+                    gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                } else if (typeof window.getGridRenderingParams === 'function') {
+                    gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                } else if (!gridRenderingParams) {
+                    // Fallback if function not available
+                    gridRenderingParams = {
+                        squareSize: Math.min(canvasWidth / grid.width, canvasHeight / grid.height),
+                        offsetX: 0,
+                        offsetY: 0,
+                        gridWidth: grid.width,
+                        gridHeight: grid.height
+                    };
+                }
                 drawGrid(grid, canvasWidth, canvasHeight);
             }
             
@@ -182,6 +198,20 @@ function draw() {
             
         } else if (grid) {
             // Draw static grid when not animating
+            if (typeof getGridRenderingParams === 'function') {
+                gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
+            } else if (typeof window.getGridRenderingParams === 'function') {
+                gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
+            } else if (!gridRenderingParams) {
+                // Fallback if function not available
+                gridRenderingParams = {
+                    squareSize: Math.min(canvasWidth / grid.width, canvasHeight / grid.height),
+                    offsetX: 0,
+                    offsetY: 0,
+                    gridWidth: grid.width,
+                    gridHeight: grid.height
+                };
+            }
             drawGrid(grid, canvasWidth, canvasHeight);
         } else {
             // Show welcome message
@@ -207,7 +237,7 @@ function updateAnimation() {
         animationState.frameCount++;
         
         // Update all balls
-        const updateResults = updateAllBalls(animationState.balls, grid);
+        const updateResults = updateAllBalls(animationState.balls, grid, gridRenderingParams);
         
         // Update animation state
         animationState.ballsActive = getActiveBalls(animationState.balls).length;
@@ -297,6 +327,29 @@ function startAnimation(imageData) {
         console.log('Grid total squares:', grid.width * grid.height);
         console.log('Image to Grid ratio:', 'Image:', blackWhiteImage.width, 'x', blackWhiteImage.height, 'Grid:', grid.width, 'x', grid.height);
 
+        // Calculate grid rendering parameters for aspect ratio preservation
+        if (typeof getGridRenderingParams === 'function') {
+            gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
+            console.log('Grid rendering params:', gridRenderingParams);
+        } else {
+            console.error('getGridRenderingParams function not available, checking window object...');
+            if (typeof window.getGridRenderingParams === 'function') {
+                gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                console.log('Grid rendering params (from window):', gridRenderingParams);
+            } else {
+                console.error('getGridRenderingParams not available in window either');
+                // Fallback: create basic parameters
+                gridRenderingParams = {
+                    squareSize: Math.min(canvasWidth / grid.width, canvasHeight / grid.height),
+                    offsetX: 0,
+                    offsetY: 0,
+                    gridWidth: grid.width,
+                    gridHeight: grid.height
+                };
+                console.log('Using fallback grid rendering params:', gridRenderingParams);
+            }
+        }
+
         // Mark isolated carveable squares as protected
         markIsolatedCarveableAsProtected(grid);
         
@@ -314,7 +367,9 @@ function startAnimation(imageData) {
         if (!animationParameters) {
             animationParameters = new AnimationParameters();
         }
-        const initialBalls = spawnInitialBalls(grid, animationParameters);
+        
+        console.log('About to spawn initial balls, gridRenderingParams:', gridRenderingParams);
+        const initialBalls = spawnInitialBalls(grid, animationParameters, gridRenderingParams);
         animationState.balls = initialBalls;
         animationState.ballsActive = initialBalls.length;
         animationState.totalBallsSpawned = initialBalls.length;
@@ -534,8 +589,8 @@ function windowResized() {
         const container = document.getElementById('canvas-container');
         if (container) {
             const containerRect = container.getBoundingClientRect();
-            canvasWidth = Math.min(800, containerRect.width - 20);
-            canvasHeight = Math.min(600, containerRect.height - 20);
+            canvasWidth = Math.min(1000, containerRect.width - 20);
+            canvasHeight = Math.min(800, containerRect.height - 20);
             
             resizeCanvas(canvasWidth, canvasHeight);
         }

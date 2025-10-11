@@ -166,7 +166,7 @@
       const characters = text.split('');
       
       let textWidth = 0;
-      let textHeight = fontSize; // Approximate height
+      let textHeight = 0; // Will be calculated more precisely
       let prevWasImage = false;
       
       for (let i = 0; i < characters.length; i++) {
@@ -185,8 +185,12 @@
         }
       }
       
-      // Add padding around the text
-      const padding = 20;
+      // Calculate precise text height using font metrics
+      const testMetrics = tempCtx.measureText('Ag'); // Use characters with ascenders and descenders
+      textHeight = testMetrics.actualBoundingBoxAscent + testMetrics.actualBoundingBoxDescent;
+      
+      // Add minimal padding around the text
+      const padding = 0; // Reduced from 20 to 4 for minimal white space
       const canvasWidth = textWidth + (padding * 2);
       const canvasHeight = textHeight + (padding * 2);
       
@@ -227,7 +231,8 @@
       
       // Draw the text with proper spacing and padding
       let x = padding; // Start with left padding
-      prevWasImage = false; // Reset the variable
+      // Reset the variable for the drawing loop
+      prevWasImage = false;
       
       for (let i = 0; i < characters.length; i++) {
         const ch = characters[i];
