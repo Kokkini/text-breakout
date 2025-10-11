@@ -152,17 +152,52 @@
         return;
       }
 
-      // Create a clean canvas for the text image
+      // First, measure the text to determine proper canvas size
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      const fontSize = 48;
+      tempCtx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
+      tempCtx.textAlign = 'left';
+      tempCtx.textBaseline = 'bottom';
+      
+      // Calculate text dimensions
+      const SPACE_GAP = 16;
+      const CHAR_GAP = 4;
+      const characters = text.split('');
+      
+      let textWidth = 0;
+      let textHeight = fontSize; // Approximate height
+      let prevWasImage = false;
+      
+      for (let i = 0; i < characters.length; i++) {
+        const ch = characters[i];
+        
+        if (ch === ' ') {
+          textWidth += SPACE_GAP;
+          prevWasImage = false;
+        } else {
+          if (prevWasImage) textWidth += CHAR_GAP;
+          
+          // Measure character width
+          const charWidth = tempCtx.measureText(ch).width;
+          textWidth += charWidth;
+          prevWasImage = true;
+        }
+      }
+      
+      // Add padding around the text
+      const padding = 20;
+      const canvasWidth = textWidth + (padding * 2);
+      const canvasHeight = textHeight + (padding * 2);
+      
+      console.log('Text dimensions:', textWidth, 'x', textHeight);
+      console.log('Canvas dimensions:', canvasWidth, 'x', canvasHeight);
+
+      // Create the actual canvas with proper dimensions
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
-      
-      // Set canvas size based on text length (estimate)
-      const estimatedWidth = text.length * 30 + 100; // Rough estimate
-      const estimatedHeight = 60;
-      canvas.width = estimatedWidth;
-      canvas.height = estimatedHeight;
-
-      console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
 
       // Generate new text image using Eutopia font
       console.log('onAnimate: Generating new text image with Eutopia font');
@@ -173,7 +208,6 @@
       
       // Set text properties with Eutopia font
       ctx.fillStyle = '#000000';
-      const fontSize = 48;
       ctx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
@@ -191,13 +225,9 @@
         actualBoundingBoxDescent: metrics.actualBoundingBoxDescent
       });
       
-      // Draw the text with proper spacing
-      const SPACE_GAP = 16;
-      const CHAR_GAP = 4;
-      const characters = text.split('');
-      
-      let x = 0;
-      let prevWasImage = false;
+      // Draw the text with proper spacing and padding
+      let x = padding; // Start with left padding
+      prevWasImage = false; // Reset the variable
       
       for (let i = 0; i < characters.length; i++) {
         const ch = characters[i];
@@ -209,10 +239,10 @@
           if (prevWasImage) x += CHAR_GAP;
           
           // Draw the character using Eutopia font
-          const y = canvas.height; // Bottom alignment
+          const y = canvas.height - padding; // Bottom alignment with padding
           ctx.fillText(ch, x, y);
           
-          // Estimate character width
+          // Get character width
           const charWidth = ctx.measureText(ch).width;
           x += charWidth;
           prevWasImage = true;

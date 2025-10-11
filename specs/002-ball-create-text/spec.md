@@ -24,6 +24,7 @@
 - Q: How should the application structure be organized? → A: Use a single index.html at the root that integrates both text-to-image conversion and ball animation functionality, building upon existing application structure rather than creating parallel systems
 - Q: What font should be used for text rendering in the animation? → A: Use the Eutopia font located in assets/Eutopia/Eutopia.otf for consistent typography with the custom character images
 - Q: How should the user workflow be simplified? → A: Remove the convert to image step; users input text and directly start animation, with text rendering handled internally using the Eutopia font
+- Q: How should the canvas size be determined for text rendering? → A: Canvas size should be dynamically calculated based on the actual text dimensions to maintain proper aspect ratio and prevent text distortion
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -125,11 +126,13 @@ Users want to customize the animation parameters to control the carving speed an
 - **FR-024**: System MUST integrate ball animation functionality into the existing single-page application structure, using a single index.html at the root that combines text input and animation features
 - **FR-025**: System MUST use the Eutopia font (assets/Eutopia/Eutopia.otf) for text rendering in the animation to maintain consistent typography
 - **FR-026**: System MUST provide a simplified user workflow where users input text and directly start animation without a separate convert step
+- **FR-027**: System MUST dynamically calculate canvas dimensions based on actual text measurements to maintain proper aspect ratio and prevent text distortion
 
 ### Key Entities *(include if feature involves data)*
 
 - **Text Input**: User-entered text that gets rendered using the Eutopia font
-- **Generated Text Image**: Text image created from user input using the Eutopia font
+- **Text Measurement**: Process of calculating actual text dimensions using font metrics to determine proper canvas size
+- **Generated Text Image**: Text image created from user input using the Eutopia font with dynamically calculated dimensions
 - **Black and White Image**: Converted binary image used to determine grid square types
 - **Grid**: 2D array of squares representing the converted image resolution with padding
 - **Ball**: Animated object with position, velocity, collision detection, and diameter equal to half the grid square edge length
@@ -150,3 +153,4 @@ Users want to customize the animation parameters to control the carving speed an
 - **SC-004**: Application maintains unified user experience with single entry point (index.html) that seamlessly integrates text input and ball animation functionality
 - **SC-005**: Text rendering in animation uses Eutopia font consistently, maintaining visual consistency
 - **SC-006**: Users can successfully start animation directly from text input without requiring a separate convert step
+- **SC-007**: Canvas dimensions are dynamically calculated to maintain proper text aspect ratio without distortion for any text length or content
