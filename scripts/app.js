@@ -1,16 +1,13 @@
 (function(){
   const input = document.getElementById('text-input');
-  const convertBtn = document.getElementById('convert-btn');
   const animateBtn = document.getElementById('animate-btn');
   const stopBtn = document.getElementById('stop-btn');
   const skipBtn = document.getElementById('skip-btn');
   const clearBtn = document.getElementById('clear-btn');
-  const output = document.getElementById('image-output');
   const statusEl = document.getElementById('status');
 
   const ALLOWED_REGEX = /^[a-z0-9 ]+$/; // lowercase letters, digits, space
   const MAX_LEN = 50;
-  const CHARS_BASE = './assets/chars/';
   
   // Animation state
   let currentImage = null;
@@ -113,144 +110,20 @@
     return ALLOWED_REGEX.test(text);
   }
 
-  function processText(raw){
-    const t = toAllowedLower(raw);
-    const filtered = [];
-    for (let i = 0; i < t.length; i++) {
-      const ch = t[i];
-      if (ch === ' ' || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')) {
-        filtered.push(ch);
-      }
-    }
-    return filtered;
-  }
 
-  function loadCharacterImage(character){
-    return new Promise((resolve, reject) => {
-      if (character === ' ') {
-        // Represent space as gap, no image
-        return resolve(null);
-      }
-      const img = new Image();
-      img.alt = character;
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('ImageLoadError'));
-      img.src = `${CHARS_BASE}${character}.png`;
-    });
-  }
-
-  async function composeImage(characters){
-    // Compose onto a single canvas with white background.
-    output.innerHTML = '';
-    const SPACE_GAP = 16; // px white space for spaces
-    const CHAR_GAP = 4;   // px spacing between adjacent characters
-    const charactersWithPadding = [' ', ...characters, ' '];
-
-    // Load images (spaces resolve to null). Skip missing images.
-    const loaded = await Promise.all(charactersWithPadding.map(async (ch) => {
-      if (ch === ' ') return { ch, img: null };
-      try {
-        const img = await loadCharacterImage(ch);
-        return { ch, img };
-      } catch (_) {
-        return null; // missing image -> skip
-      }
-    }));
-
-    // Filter out missing characters entirely (per spec)
-    const parts = loaded.filter(Boolean);
-
-    // Determine canvas size
-    let width = 0;
-    let height = 0;
-    let prevWasImage = false;
-    for (const part of parts) {
-      if (part.img === null) {
-        width += SPACE_GAP; // space
-        prevWasImage = false; // break adjacency
-      } else {
-        if (prevWasImage) width += CHAR_GAP; // gap between adjacent characters
-        width += part.img.width;
-        height = Math.max(height, part.img.height);
-        prevWasImage = true;
-      }
-    }
-
-    if (width === 0 || height === 0) {
-      // Nothing to render
-      return;
-    }
-
-    const canvas = document.createElement('canvas');
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-
-    // Fill white background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Draw characters left-to-right; align to bottom
-    let x = 0;
-    prevWasImage = false;
-    for (const part of parts) {
-      if (part.img === null) {
-        x += SPACE_GAP; // gap for space
-        prevWasImage = false;
-      } else {
-        if (prevWasImage) x += CHAR_GAP;
-        const y = canvas.height - part.img.height;
-        ctx.drawImage(part.img, x, y);
-        x += part.img.width;
-        prevWasImage = true;
-      }
-    }
-
-    // Display the single composed image
-    displayCompositeImage(canvas);
-  }
-
-  function displayCompositeImage(canvas){
-    // Replace output with a single <img> generated from the canvas
-    output.innerHTML = '';
-    const img = document.createElement('img');
-    img.alt = 'Composite image';
-    try {
-      img.src = canvas.toDataURL('image/png');
-      currentImage = canvas; // Store for animation
-    } catch (_) {
-      // Fallback: append canvas directly if toDataURL not available
-      output.appendChild(canvas);
-      currentImage = canvas;
-      return;
-    }
-    output.appendChild(img);
-  }
-
-  function updateConvertButtonState(){
+  function updateAnimateButtonState(){
     const text = input.value;
     const valid = validateInput(toAllowedLower(text));
-    convertBtn.disabled = !valid;
-    animateBtn.disabled = !valid || !currentImage;
+    animateBtn.disabled = !valid;
   }
 
-  async function onConvert(){
-    const t0 = performance.now();
-    const chars = processText(input.value);
-    setStatus('Generating...');
-    await composeImage(chars);
-    const t1 = performance.now();
-    setStatus(`Done in ${Math.round(t1 - t0)} ms`);
-    updateConvertButtonState();
-  }
 
   // Make onClear globally available
   window.onClear = function(){
     input.value = '';
     currentImage = null;
     isAnimating = false;
-    updateConvertButtonState();
-    output.innerHTML = '';
+    updateAnimateButtonState();
     setStatus('');
     input.focus();
     
@@ -263,36 +136,35 @@
   
   // Make onAnimate globally available
   window.onAnimate = function(){
-    console.log('onAnimate called, currentImage:', currentImage, 'isAnimating:', isAnimating);
-    if (!currentImage || isAnimating) {
-      console.log('onAnimate early return - currentImage:', !!currentImage, 'isAnimating:', isAnimating);
+    console.log('onAnimate called, isAnimating:', isAnimating);
+    if (isAnimating) {
+      console.log('onAnimate early return - already animating');
       return;
     }
 
     try {
-      console.log('onAnimate: Getting image from output div');
-      // Get the image from the image-output div (the displayed image)
-      const imgElement = output.querySelector('img');
-      const canvasElement = output.querySelector('canvas');
-      console.log('onAnimate: imgElement found:', !!imgElement, 'canvasElement found:', !!canvasElement);
+      console.log('onAnimate: Generating text image directly');
       
-      if (!imgElement && !canvasElement) {
-        console.log('onAnimate: No image or canvas element found');
-        setStatus('No image found. Please convert text to image first.');
+      // Get the text input
+      const text = input.value.trim();
+      if (!text) {
+        setStatus('Please enter some text first.');
         return;
       }
 
-      // Create a clean canvas at 1/4 resolution for better performance
-      const originalCanvas = currentImage;
-      const downsampleFactor = 1;
+      // Create a clean canvas for the text image
       const canvas = document.createElement('canvas');
-      canvas.width = Math.floor(originalCanvas.width / downsampleFactor);
-      canvas.height = Math.floor(originalCanvas.height / downsampleFactor);
       const ctx = canvas.getContext('2d');
+      
+      // Set canvas size based on text length (estimate)
+      const estimatedWidth = text.length * 30 + 100; // Rough estimate
+      const estimatedHeight = 60;
+      canvas.width = estimatedWidth;
+      canvas.height = estimatedHeight;
 
-      console.log('Using existing canvas dimensions:', canvas.width, 'x', canvas.height);
+      console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
 
-      // Generate new text image using Eutopia font (avoid tainted canvas issues)
+      // Generate new text image using Eutopia font
       console.log('onAnimate: Generating new text image with Eutopia font');
       
       // Fill white background
@@ -301,7 +173,7 @@
       
       // Set text properties with Eutopia font
       ctx.fillStyle = '#000000';
-      const fontSize = 48 / downsampleFactor;
+      const fontSize = 48;
       ctx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
@@ -319,10 +191,9 @@
         actualBoundingBoxDescent: metrics.actualBoundingBoxDescent
       });
       
-      // Get the text and draw it with proper spacing
-      const text = input.value.trim();
-      const SPACE_GAP = 16 / downsampleFactor; // Scale spacing down
-      const CHAR_GAP = 4 / downsampleFactor;   // Scale spacing down
+      // Draw the text with proper spacing
+      const SPACE_GAP = 16;
+      const CHAR_GAP = 4;
       const characters = text.split('');
       
       let x = 0;
@@ -452,24 +323,9 @@
     return eutopiaWidth !== arialWidth;
   }
 
-  // Preload images for fast conversion
-  function preloadAll(){
-    const list = [];
-    for (let c = 97; c <= 122; c++) { // a-z
-      list.push(String.fromCharCode(c));
-    }
-    for (let d = 48; d <= 57; d++) { // 0-9
-      list.push(String.fromCharCode(d));
-    }
-    list.forEach(ch => {
-      const img = new Image();
-      img.src = `${CHARS_BASE}${ch}.png`;
-    });
-  }
 
   // Wire events
-  input.addEventListener('input', updateConvertButtonState);
-  convertBtn.addEventListener('click', onConvert);
+  input.addEventListener('input', updateAnimateButtonState);
   animateBtn.addEventListener('click', function() {
     console.log('Animate button clicked');
     onAnimate();
@@ -479,8 +335,7 @@
   clearBtn.addEventListener('click', onClear);
 
   // Init
-  preloadAll();
-  updateConvertButtonState();
+  updateAnimateButtonState();
   
   // Check font loading after a short delay
   setTimeout(() => {

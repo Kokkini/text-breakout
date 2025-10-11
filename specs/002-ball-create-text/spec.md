@@ -23,6 +23,7 @@
 - Q: How should isolated carveable squares be handled? → A: If all squares adjacent to that square is protected, then mark it as protected. Else, the text image already ensures that the square is reachable
 - Q: How should the application structure be organized? → A: Use a single index.html at the root that integrates both text-to-image conversion and ball animation functionality, building upon existing application structure rather than creating parallel systems
 - Q: What font should be used for text rendering in the animation? → A: Use the Eutopia font located in assets/Eutopia/Eutopia.otf for consistent typography with the custom character images
+- Q: How should the user workflow be simplified? → A: Remove the convert to image step; users input text and directly start animation, with text rendering handled internally using the Eutopia font
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -32,11 +33,11 @@ A user wants to see an animated ball carving effect that gradually reveals text 
 
 **Why this priority**: This is the core visual effect that delivers the primary entertainment value and demonstrates the text carving concept.
 
-**Independent Test**: Can be fully tested by converting text to image, then watching the ball animation carve out the text pattern through bouncing and collision mechanics.
+**Independent Test**: Can be fully tested by entering text and starting animation, then watching the ball animation carve out the text pattern through bouncing and collision mechanics.
 
 **Acceptance Scenarios**:
 
-1. **Given** a user has converted text to image, **When** the animation starts, **Then** they see a grid of black squares with white edges and bouncing balls
+1. **Given** a user has entered text, **When** the animation starts, **Then** they see a grid of black squares with white edges and bouncing balls
 2. **Given** balls are bouncing in the animation, **When** a ball hits a black square, **Then** the square turns white
 3. **Given** balls are bouncing in the animation, **When** a ball hits the grid edge, **Then** the ball bounces off with some deviation angle
 4. **Given** the animation is running, **When** balls move across white squares, **Then** they pass through freely without changing the squares
@@ -85,7 +86,7 @@ Users want to customize the animation parameters to control the carving speed an
 
 **Acceptance Scenarios**:
 
-1. **Given** a user has converted text to image, **When** they want to customize the animation, **Then** they can adjust the number of balls, deviation angle, and movement speed before starting
+1. **Given** a user has entered text, **When** they want to customize the animation, **Then** they can adjust the number of balls, deviation angle, and movement speed before starting
 2. **Given** a user has customized animation settings, **When** the animation starts, **Then** it uses the specified number of balls, deviation angle, and movement speed
 3. **Given** a user wants to reset to defaults, **When** they click a reset button, **Then** the settings return to default values for all parameters
 
@@ -98,34 +99,37 @@ Users want to customize the animation parameters to control the carving speed an
 
 ### Functional Requirements
 
-- **FR-001**: System MUST convert the original grayscale text image (black text on white background) to a black and white image
-- **FR-002**: System MUST create a grid of squares matching the resolution of the converted black and white image
-- **FR-003**: System MUST initialize grid squares as black where the black and white image has black pixels (protected text areas)
-- **FR-004**: System MUST initialize grid squares as black where the black and white image has white pixels (carveable background areas)
-- **FR-005**: System MUST add 5 white squares as padding on all sides of the grid to create edges
-- **FR-006**: System MUST initialize multiple black balls around the grid edges with diameter equal to half the edge length of each grid square (default 20 balls, user customizable)
-- **FR-007**: System MUST animate balls bouncing around the grid with physics-based movement (default speed user customizable)
-- **FR-008**: System MUST turn black squares white when balls collide with them
-- **FR-009**: System MUST allow balls to move freely through white squares without changing them
-- **FR-010**: System MUST make balls bounce off grid edges with calculated optimal angles using ray casting
-- **FR-011**: System MUST use ray casting at integer angles from -X to +X degrees to find closest intersection with carveable squares (default 20 degrees, user customizable)
-- **FR-012**: System MUST use random angle within -X to +X degree range when no optimal bounce angle is found (default 20 degrees, user customizable)
-- **FR-013**: System MUST prioritize ball targeting: carveable black squares > grid edges > protected black squares
-- **FR-014**: System MUST destroy balls that hit protected black squares (text pattern squares)
-- **FR-015**: System MUST spawn new balls at edge positions when balls are destroyed using ray casting from carveable squares to find viable spawn locations
-- **FR-016**: System MUST aim new balls using ray direction from carveable squares to edge intersections as the spawn angle
-- **FR-017**: System MUST check each frame if any carveable black squares remain and stop animation when none are found
-- **FR-018**: System MUST display the final text pattern when animation completes
-- **FR-019**: System MUST allow users to skip or stop the animation to see final result
+- **FR-001**: System MUST generate a text image using the Eutopia font from user input text
+- **FR-002**: System MUST convert the generated text image to a black and white image for grid creation
+- **FR-003**: System MUST create a grid of squares matching the resolution of the converted black and white image
+- **FR-004**: System MUST initialize grid squares as black where the black and white image has black pixels (protected text areas)
+- **FR-005**: System MUST initialize grid squares as black where the black and white image has white pixels (carveable background areas)
+- **FR-006**: System MUST add 5 white squares as padding on all sides of the grid to create edges
+- **FR-007**: System MUST initialize multiple black balls around the grid edges with diameter equal to half the edge length of each grid square (default 20 balls, user customizable)
+- **FR-008**: System MUST animate balls bouncing around the grid with physics-based movement (default speed user customizable)
+- **FR-009**: System MUST turn black squares white when balls collide with them
+- **FR-010**: System MUST allow balls to move freely through white squares without changing them
+- **FR-011**: System MUST make balls bounce off grid edges with calculated optimal angles using ray casting
+- **FR-012**: System MUST use ray casting at integer angles from -X to +X degrees to find closest intersection with carveable squares (default 20 degrees, user customizable)
+- **FR-013**: System MUST use random angle within -X to +X degree range when no optimal bounce angle is found (default 20 degrees, user customizable)
+- **FR-014**: System MUST prioritize ball targeting: carveable black squares > grid edges > protected black squares
+- **FR-015**: System MUST destroy balls that hit protected black squares (text pattern squares)
+- **FR-016**: System MUST spawn new balls at edge positions when balls are destroyed using ray casting from carveable squares to find viable spawn locations
+- **FR-017**: System MUST aim new balls using ray direction from carveable squares to edge intersections as the spawn angle
+- **FR-018**: System MUST check each frame if any carveable black squares remain and stop animation when none are found
+- **FR-019**: System MUST display the final text pattern when animation completes
+- **FR-020**: System MUST allow users to skip or stop the animation to see final result
 - **FR-021**: System MUST provide user controls to customize number of balls, deviation angle, and movement speed before starting animation
 - **FR-022**: System MUST use ray casting from remaining carveable squares to find viable spawn positions when all balls are destroyed
 - **FR-023**: System MUST mark isolated carveable squares as protected if all adjacent squares are protected, otherwise assume they are reachable
-- **FR-024**: System MUST integrate ball animation functionality into the existing single-page application structure, using a single index.html at the root that combines text-to-image conversion and animation features
-- **FR-025**: System MUST use the Eutopia font (assets/Eutopia/Eutopia.otf) for text rendering in the animation to maintain consistent typography with custom character images
+- **FR-024**: System MUST integrate ball animation functionality into the existing single-page application structure, using a single index.html at the root that combines text input and animation features
+- **FR-025**: System MUST use the Eutopia font (assets/Eutopia/Eutopia.otf) for text rendering in the animation to maintain consistent typography
+- **FR-026**: System MUST provide a simplified user workflow where users input text and directly start animation without a separate convert step
 
 ### Key Entities *(include if feature involves data)*
 
-- **Grayscale Image**: Original text image with black text on white background
+- **Text Input**: User-entered text that gets rendered using the Eutopia font
+- **Generated Text Image**: Text image created from user input using the Eutopia font
 - **Black and White Image**: Converted binary image used to determine grid square types
 - **Grid**: 2D array of squares representing the converted image resolution with padding
 - **Ball**: Animated object with position, velocity, collision detection, and diameter equal to half the grid square edge length
@@ -143,5 +147,6 @@ Users want to customize the animation parameters to control the carving speed an
 - **SC-001**: Balls successfully carve out 95% of non-text black squares without destroying text pattern
 - **SC-002**: Users can successfully view the final carved text pattern 100% of the time
 - **SC-003**: Ball targeting accuracy results in less than 5% of balls hitting protected text squares
-- **SC-004**: Application maintains unified user experience with single entry point (index.html) that seamlessly integrates text-to-image conversion and ball animation functionality
-- **SC-005**: Text rendering in animation uses Eutopia font consistently, maintaining visual consistency with custom character images
+- **SC-004**: Application maintains unified user experience with single entry point (index.html) that seamlessly integrates text input and ball animation functionality
+- **SC-005**: Text rendering in animation uses Eutopia font consistently, maintaining visual consistency
+- **SC-006**: Users can successfully start animation directly from text input without requiring a separate convert step
