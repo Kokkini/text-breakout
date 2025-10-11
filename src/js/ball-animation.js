@@ -431,7 +431,7 @@ function checkBallCollision(ball, grid, gridRenderingParams) {
  * @param {Grid} grid - Grid being collided with
  * @returns {Object} Result of collision handling
  */
-function handleBallCollision(ball, collisionResult, grid, gridRenderingParams) {
+function handleBallCollision(ball, collisionResult, grid, gridRenderingParams, animationParameters) {
     try {
         if (!collisionResult.hasCollision) {
             return { success: true, action: 'none' };
@@ -442,15 +442,15 @@ function handleBallCollision(ball, collisionResult, grid, gridRenderingParams) {
         if (shouldCarve) {
             // Carve the square (turn black to white) and bounce
             updateSquareState(grid, square.x, square.y, SquareState.WHITE_CARVED);
-            bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams);
+            bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams, animationParameters);
             return { success: true, action: 'carved', square: square };
             
         } else if (shouldBounce) {
             // Bounce the ball - use appropriate bounce function based on collision type
             if (collisionResult.isEdge) {
-                bounceBallOffEdgeSmart(ball, collisionResult, grid, gridRenderingParams);
+                bounceBallOffEdgeSmart(ball, collisionResult, grid, gridRenderingParams, animationParameters);
             } else {
-                bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams);
+                bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams, animationParameters);
             }
             return { success: true, action: 'bounce', square: square };
         }
@@ -473,14 +473,14 @@ function handleBallCollision(ball, collisionResult, grid, gridRenderingParams) {
  * @param {Object} collisionResult - Collision result with collision point
  * @param {Grid} grid - Grid for ray casting
  */
-function bounceBallOffEdgeSmart(ball, collisionResult, grid, gridRenderingParams) {
+function bounceBallOffEdgeSmart(ball, collisionResult, grid, gridRenderingParams, animationParameters) {
     try {
         if (!ball || !collisionResult || !grid) {
             return;
         }
         
-        // Get deviation angle from animation parameters (default 20 degrees)
-        const deviationAngle = 20; // This should come from animationParameters
+        // Get deviation angle from animation parameters
+        const deviationAngle = animationParameters ? animationParameters.deviationAngle : 15;
         
         // Use smart ray casting to find optimal bounce angle
         if (typeof findOptimalBounceAngle === 'function') {
@@ -556,14 +556,14 @@ function bounceBallOffEdge(ball, collisionResult, grid) {
  * @param {Object} collisionResult - Collision result with collision point
  * @param {Grid} grid - Grid object for ray casting
  */
-function bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams) {
+function bounceBallOffSquareSmart(ball, collisionResult, grid, gridRenderingParams, animationParameters) {
     try {
         if (!ball || !collisionResult || !grid) {
             return;
         }
         
-        // Get deviation angle from animation parameters (default 20 degrees)
-        const deviationAngle = 20; // This should come from animationParameters
+        // Get deviation angle from animation parameters
+        const deviationAngle = animationParameters ? animationParameters.deviationAngle : 15;
         
         // Use smart ray casting to find optimal bounce angle
         if (typeof findOptimalBounceAngle === 'function') {
@@ -676,7 +676,7 @@ function spawnNewBall(grid, parameters, gridRenderingParams) {
         const ballY = pixelCoords.y + pixelCoords.height / 2;
         
         // Random initial velocity
-        const speed = 2 * parameters.movementSpeed;
+        const speed = 4 * parameters.movementSpeed;
         const angle = Math.random() * Math.PI * 2;
         const velocityX = Math.cos(angle) * speed;
         const velocityY = Math.sin(angle) * speed;
@@ -764,7 +764,7 @@ function spawnInitialBalls(grid, parameters, gridRenderingParams) {
  * @param {Grid} grid - Grid for collision detection
  * @returns {Object} Update results
  */
-function updateAllBalls(balls, grid, gridRenderingParams) {
+function updateAllBalls(balls, grid, gridRenderingParams, animationParameters) {
     try {
         if (!Array.isArray(balls)) {
             throw new Error('Balls must be an array');
@@ -793,7 +793,7 @@ function updateAllBalls(balls, grid, gridRenderingParams) {
             
             // Handle collision if one occurred during sub-stepping
             if (collisionResult.hasCollision) {
-                const handleResult = handleBallCollision(ball, collisionResult, grid, gridRenderingParams);
+                const handleResult = handleBallCollision(ball, collisionResult, grid, gridRenderingParams, animationParameters);
                 
                 if (handleResult.action === 'carved') {
                     results.squaresCarved++;

@@ -6,8 +6,8 @@
 // Define classes locally if not available globally
 const AnimationParameters = window.AnimationParameters || class {
     constructor() {
-        this.ballCount = 20;
-        this.deviationAngle = 20;
+        this.ballCount = 30;
+        this.deviationAngle = 15;
         this.movementSpeed = 1.0;
     }
 };
@@ -246,7 +246,7 @@ function updateAnimation() {
         animationState.frameCount++;
         
         // Update all balls
-        const updateResults = updateAllBalls(animationState.balls, grid, gridRenderingParams);
+        const updateResults = updateAllBalls(animationState.balls, grid, gridRenderingParams, animationParameters);
         
         // Update animation state
         animationState.ballsActive = getActiveBalls(animationState.balls).length;
@@ -330,7 +330,7 @@ function startAnimation(imageData) {
         }
         
         // Create grid
-        grid = createGrid(blackWhiteImage, 5);
+        grid = createGrid(blackWhiteImage, 3);
         
         console.log('Grid Dimensions:', grid.width, 'x', grid.height);
         console.log('Grid total squares:', grid.width * grid.height);
@@ -514,8 +514,8 @@ function resetAnimation() {
         
         // Reset parameters to defaults
         if (animationParameters) {
-            animationParameters.ballCount = 20;
-            animationParameters.deviationAngle = 20;
+            animationParameters.ballCount = 30;
+            animationParameters.deviationAngle = 15;
             animationParameters.movementSpeed = 1.0;
             if (typeof updateParameterDisplays === 'function') {
                 updateParameterDisplays();

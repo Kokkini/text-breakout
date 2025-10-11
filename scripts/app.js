@@ -6,8 +6,8 @@
   const clearBtn = document.getElementById('clear-btn');
   const statusEl = document.getElementById('status');
 
-  const ALLOWED_REGEX = /^[a-z0-9 ]+$/; // lowercase letters, digits, space
-  const MAX_LEN = 50;
+  const ALLOWED_REGEX = /^[a-z0-9 \n]+$/; // lowercase letters, digits, space, newlines
+  const MAX_LEN = 200;
   
   // Animation state
   let currentImage = null;
@@ -155,47 +155,60 @@
       // First, measure the text to determine proper canvas size
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
-      const fontSize = 48;
+      const fontSize = 20;
       tempCtx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
       tempCtx.textAlign = 'left';
       tempCtx.textBaseline = 'bottom';
       
-      // Calculate text dimensions
-      const SPACE_GAP = 16;
-      const CHAR_GAP = 4;
-      const characters = text.split('');
+      // Split text into lines
+      const lines = text.split('\n');
+      const SPACE_GAP = 6 * fontSize / 20;
+      const CHAR_GAP = 2 * fontSize / 20;
+      const LINE_HEIGHT = fontSize * 0.8; // Reduced from 1.2 to 1.0 for tighter line spacing
       
-      let textWidth = 0;
-      let textHeight = 0; // Will be calculated more precisely
-      let prevWasImage = false;
+      // Calculate dimensions for each line
+      let maxLineWidth = 0;
+      const lineWidths = [];
       
-      for (let i = 0; i < characters.length; i++) {
-        const ch = characters[i];
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const line = lines[lineIndex];
+        const characters = line.split('');
         
-        if (ch === ' ') {
-          textWidth += SPACE_GAP;
-          prevWasImage = false;
-        } else {
-          if (prevWasImage) textWidth += CHAR_GAP;
+        let lineWidth = 0;
+        let prevWasImage = false;
+        
+        for (let i = 0; i < characters.length; i++) {
+          const ch = characters[i];
           
-          // Measure character width
-          const charWidth = tempCtx.measureText(ch).width;
-          textWidth += charWidth;
-          prevWasImage = true;
+          if (ch === ' ') {
+            lineWidth += SPACE_GAP;
+            prevWasImage = false;
+          } else {
+            if (prevWasImage) lineWidth += CHAR_GAP;
+            
+            // Measure character width
+            const charWidth = tempCtx.measureText(ch).width;
+            lineWidth += charWidth;
+            prevWasImage = true;
+          }
         }
+        
+        lineWidths.push(lineWidth);
+        maxLineWidth = Math.max(maxLineWidth, lineWidth);
       }
       
-      // Calculate precise text height using font metrics
-      const testMetrics = tempCtx.measureText('Ag'); // Use characters with ascenders and descenders
-      textHeight = testMetrics.actualBoundingBoxAscent + testMetrics.actualBoundingBoxDescent;
+      // Calculate total text dimensions
+      const textWidth = maxLineWidth;
+      const textHeight = lines.length * LINE_HEIGHT;
       
       // Add minimal padding around the text
-      const padding = 0; // Reduced from 20 to 4 for minimal white space
+      const padding = 0;
       const canvasWidth = textWidth + (padding * 2);
       const canvasHeight = textHeight + (padding * 2);
       
       console.log('Text dimensions:', textWidth, 'x', textHeight);
       console.log('Canvas dimensions:', canvasWidth, 'x', canvasHeight);
+      console.log('Number of lines:', lines.length);
 
       // Create the actual canvas with proper dimensions
       const canvas = document.createElement('canvas');
@@ -229,28 +242,34 @@
         actualBoundingBoxDescent: metrics.actualBoundingBoxDescent
       });
       
-      // Draw the text with proper spacing and padding
-      let x = padding; // Start with left padding
-      // Reset the variable for the drawing loop
-      prevWasImage = false;
-      
-      for (let i = 0; i < characters.length; i++) {
-        const ch = characters[i];
+      // Draw the text with proper spacing and padding for each line
+      for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+        const line = lines[lineIndex];
+        const characters = line.split('');
         
-        if (ch === ' ') {
-          x += SPACE_GAP;
-          prevWasImage = false;
-        } else {
-          if (prevWasImage) x += CHAR_GAP;
+        let x = padding; // Start with left padding
+        let prevWasImage = false;
+        
+        // Calculate Y position for this line (from top to bottom)
+        const y = padding + (lineIndex + 1) * LINE_HEIGHT;
+        
+        for (let i = 0; i < characters.length; i++) {
+          const ch = characters[i];
           
-          // Draw the character using Eutopia font
-          const y = canvas.height - padding; // Bottom alignment with padding
-          ctx.fillText(ch, x, y);
-          
-          // Get character width
-          const charWidth = ctx.measureText(ch).width;
-          x += charWidth;
-          prevWasImage = true;
+          if (ch === ' ') {
+            x += SPACE_GAP;
+            prevWasImage = false;
+          } else {
+            if (prevWasImage) x += CHAR_GAP;
+            
+            // Draw the character using Eutopia font
+            ctx.fillText(ch, x, y);
+            
+            // Get character width
+            const charWidth = ctx.measureText(ch).width;
+            x += charWidth;
+            prevWasImage = true;
+          }
         }
       }
 
@@ -276,7 +295,8 @@
       let whiteCount = 0;
       for (let i = 0; i < pixels.length; i++) {
         // Convert grayscale to black and white (threshold at 128)
-        blackWhitePixels[i] = pixels[i] < 128 ? 0 : 255;
+        let blackWhiteThreshold = 128;
+        blackWhitePixels[i] = pixels[i] < blackWhiteThreshold ? 0 : 255;
         if (blackWhitePixels[i] === 0) blackCount++;
         else whiteCount++;
       }

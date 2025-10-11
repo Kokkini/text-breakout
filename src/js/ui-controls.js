@@ -399,8 +399,8 @@ function getCurrentParameters() {
     try {
         if (!animationParameters) {
             return {
-                ballCount: 20,
-                deviationAngle: 20,
+                ballCount: 30,
+                deviationAngle: 15,
                 movementSpeed: 1.0
             };
         }
@@ -414,8 +414,8 @@ function getCurrentParameters() {
     } catch (error) {
         globalErrorHandler.handleError(error, { context: 'getCurrentParameters' });
         return {
-            ballCount: 20,
-            deviationAngle: 20,
+            ballCount: 30,
+            deviationAngle: 15,
             movementSpeed: 1.0
         };
     }

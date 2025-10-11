@@ -27,20 +27,20 @@
       <p class="subtitle">Watch balls carve out your text!</p>
       
       <form id="text-form" aria-describedby="status" onsubmit="return false;">
-        <label for="text-input">Enter text (a-z, 0-9, spaces):</label>
-        <input id="text-input" name="text" type="text" maxlength="50" autocomplete="off" />
+        <label for="text-input">Enter text (a-z, 0-9, spaces, newlines):</label>
+        <textarea id="text-input" name="text" rows="3" cols="50" maxlength="200" placeholder="Enter your text here...&#10;You can use multiple lines!"></textarea>
         
         <div class="animation-controls">
           <div class="control-group">
             <label for="ball-count">Ball Count:</label>
             <input type="range" id="ball-count" min="1" max="50" value="20" />
-            <span id="ball-count-value">20</span>
+            <span id="ball-count-value">30</span>
           </div>
           
           <div class="control-group">
             <label for="deviation-angle">Deviation Angle:</label>
             <input type="range" id="deviation-angle" min="1" max="45" value="20" />
-            <span id="deviation-angle-value">20°</span>
+            <span id="deviation-angle-value">15°</span>
           </div>
           
           <div class="control-group">

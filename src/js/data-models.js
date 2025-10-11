@@ -437,7 +437,7 @@ class AnimationState {
  * AnimationParameters - User-configurable settings including ball count (default 20), deviation angle (default 20 degrees), and movement speed (default customizable)
  */
 class AnimationParameters {
-    constructor(ballCount = 20, deviationAngle = 20, movementSpeed = 1.0, enableCustomization = true) {
+    constructor(ballCount = 30, deviationAngle = 15, movementSpeed = 1.0, enableCustomization = true) {
         this.ballCount = ballCount;
         this.deviationAngle = deviationAngle;
         this.movementSpeed = movementSpeed;
@@ -462,8 +462,8 @@ class AnimationParameters {
     }
     
     resetToDefaults() {
-        this.ballCount = 20;
-        this.deviationAngle = 20;
+        this.ballCount = 30;
+        this.deviationAngle = 15;
         this.movementSpeed = 1.0;
     }
 }
