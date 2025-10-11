@@ -22,6 +22,7 @@
 - Q: How should performance issues be handled? → A: Remove performance requirement
 - Q: How should isolated carveable squares be handled? → A: If all squares adjacent to that square is protected, then mark it as protected. Else, the text image already ensures that the square is reachable
 - Q: How should the application structure be organized? → A: Use a single index.html at the root that integrates both text-to-image conversion and ball animation functionality, building upon existing application structure rather than creating parallel systems
+- Q: What font should be used for text rendering in the animation? → A: Use the Eutopia font located in assets/Eutopia/Eutopia.otf for consistent typography with the custom character images
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -120,6 +121,7 @@ Users want to customize the animation parameters to control the carving speed an
 - **FR-022**: System MUST use ray casting from remaining carveable squares to find viable spawn positions when all balls are destroyed
 - **FR-023**: System MUST mark isolated carveable squares as protected if all adjacent squares are protected, otherwise assume they are reachable
 - **FR-024**: System MUST integrate ball animation functionality into the existing single-page application structure, using a single index.html at the root that combines text-to-image conversion and animation features
+- **FR-025**: System MUST use the Eutopia font (assets/Eutopia/Eutopia.otf) for text rendering in the animation to maintain consistent typography with custom character images
 
 ### Key Entities *(include if feature involves data)*
 
@@ -132,6 +134,7 @@ Users want to customize the animation parameters to control the carving speed an
 - **Bounce Angle**: Calculated angle for ball reflection, either optimal (via ray casting) or random within deviation range
 - **Animation State**: Current progress of the carving process and ball management
 - **Animation Parameters**: User-configurable settings including ball count (default 20), deviation angle (default 20 degrees), and movement speed (default customizable)
+- **Eutopia Font**: Custom font file (assets/Eutopia/Eutopia.otf) used for text rendering to maintain consistent typography with character images
 
 ## Success Criteria *(mandatory)*
 
@@ -141,3 +144,4 @@ Users want to customize the animation parameters to control the carving speed an
 - **SC-002**: Users can successfully view the final carved text pattern 100% of the time
 - **SC-003**: Ball targeting accuracy results in less than 5% of balls hitting protected text squares
 - **SC-004**: Application maintains unified user experience with single entry point (index.html) that seamlessly integrates text-to-image conversion and ball animation functionality
+- **SC-005**: Text rendering in animation uses Eutopia font consistently, maintaining visual consistency with custom character images
