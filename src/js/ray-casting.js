@@ -134,6 +134,7 @@ function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult, gri
             normalY = collisionResult.normal.y;
         } else {
             // Fallback: determine normal based on which component of velocity is larger
+            console.log('Fallback to determine normal based on which component of velocity is larger');
             if (Math.abs(currentVelocityX) > Math.abs(currentVelocityY)) {
                 // Moving more horizontally - assume hitting vertical surface
                 normalX = currentVelocityX > 0 ? -1 : 1; // Opposite to movement direction

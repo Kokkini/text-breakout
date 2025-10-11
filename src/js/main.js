@@ -197,10 +197,10 @@ function draw() {
                 drawBalls(animationState.balls);
             }
             
-            // Check for completion
-            if (isAnimationComplete(grid)) {
-                completeAnimation();
-            }
+            // // Check for completion
+            // if (isAnimationComplete(grid)) {
+            //     completeAnimation();
+            // }
             
         } else if (grid) {
             // Draw static grid when not animating

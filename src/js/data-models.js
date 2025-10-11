@@ -212,6 +212,8 @@ class Ball {
         this.velocityY = velocityY;
         this.diameter = diameter;
         this.isActive = true;
+        this.initialSpeed = Math.sqrt(velocityX * velocityX + velocityY * velocityY);
+        console.log('Initial speed: ', this.initialSpeed);
         
         this.validate();
     }
