@@ -284,7 +284,7 @@
 
       // Create a clean canvas at 1/4 resolution for better performance
       const originalCanvas = currentImage;
-      const downsampleFactor = 4;
+      const downsampleFactor = 1;
       const canvas = document.createElement('canvas');
       canvas.width = Math.floor(originalCanvas.width / downsampleFactor);
       canvas.height = Math.floor(originalCanvas.height / downsampleFactor);
@@ -292,49 +292,59 @@
 
       console.log('Using existing canvas dimensions:', canvas.width, 'x', canvas.height);
 
-      // Draw the image from either the img element or recreate the text
-      if (imgElement) {
-        console.log('onAnimate: Drawing from img element');
-        ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
-      } else if (canvasElement) {
-        console.log('onAnimate: Recreating text on clean canvas');
-        // Fill white background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Generate new text image using Eutopia font (avoid tainted canvas issues)
+      console.log('onAnimate: Generating new text image with Eutopia font');
+      
+      // Fill white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Set text properties with Eutopia font
+      ctx.fillStyle = '#000000';
+      const fontSize = 48 / downsampleFactor;
+      ctx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      
+      // Debug: Log the actual font being used
+      console.log('Canvas font set to:', ctx.font);
+      console.log('Font size:', fontSize);
+      
+      // Test if font is loaded by measuring text
+      const testText = 'Hello';
+      const metrics = ctx.measureText(testText);
+      console.log('Font metrics for "Hello":', {
+        width: metrics.width,
+        actualBoundingBoxAscent: metrics.actualBoundingBoxAscent,
+        actualBoundingBoxDescent: metrics.actualBoundingBoxDescent
+      });
+      
+      // Get the text and draw it with proper spacing
+      const text = input.value.trim();
+      const SPACE_GAP = 16 / downsampleFactor; // Scale spacing down
+      const CHAR_GAP = 4 / downsampleFactor;   // Scale spacing down
+      const characters = text.split('');
+      
+      let x = 0;
+      let prevWasImage = false;
+      
+      for (let i = 0; i < characters.length; i++) {
+        const ch = characters[i];
         
-        // Set text properties scaled down for the smaller canvas
-        ctx.fillStyle = '#000000';
-        ctx.font = `${48 / downsampleFactor}px Arial`; // Scale font size down
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        
-        // Get the text and recreate it with scaled spacing
-        const text = input.value.trim();
-        const SPACE_GAP = 16 / downsampleFactor; // Scale spacing down
-        const CHAR_GAP = 4 / downsampleFactor;   // Scale spacing down
-        const characters = text.split('');
-        
-        let x = 0;
-        let prevWasImage = false;
-        
-        for (let i = 0; i < characters.length; i++) {
-          const ch = characters[i];
+        if (ch === ' ') {
+          x += SPACE_GAP;
+          prevWasImage = false;
+        } else {
+          if (prevWasImage) x += CHAR_GAP;
           
-          if (ch === ' ') {
-            x += SPACE_GAP;
-            prevWasImage = false;
-          } else {
-            if (prevWasImage) x += CHAR_GAP;
-            
-            // Draw the character
-            const y = canvas.height; // Bottom alignment
-            ctx.fillText(ch, x, y);
-            
-            // Estimate character width
-            const charWidth = ctx.measureText(ch).width;
-            x += charWidth;
-            prevWasImage = true;
-          }
+          // Draw the character using Eutopia font
+          const y = canvas.height; // Bottom alignment
+          ctx.fillText(ch, x, y);
+          
+          // Estimate character width
+          const charWidth = ctx.measureText(ch).width;
+          x += charWidth;
+          prevWasImage = true;
         }
       }
 
@@ -423,6 +433,25 @@
     setStatus('Animation skipped');
   }
 
+  // Check if Eutopia font is loaded
+  function checkFontLoaded() {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Test with Eutopia font
+    ctx.font = '16px Eutopia, Arial, sans-serif';
+    const eutopiaWidth = ctx.measureText('Hello').width;
+    
+    // Test with Arial fallback
+    ctx.font = '16px Arial, sans-serif';
+    const arialWidth = ctx.measureText('Hello').width;
+    
+    console.log('Font test - Eutopia width:', eutopiaWidth, 'Arial width:', arialWidth);
+    console.log('Fonts are different:', eutopiaWidth !== arialWidth);
+    
+    return eutopiaWidth !== arialWidth;
+  }
+
   // Preload images for fast conversion
   function preloadAll(){
     const list = [];
@@ -452,6 +481,15 @@
   // Init
   preloadAll();
   updateConvertButtonState();
+  
+  // Check font loading after a short delay
+  setTimeout(() => {
+    const fontLoaded = checkFontLoaded();
+    console.log('Eutopia font loaded:', fontLoaded);
+    if (!fontLoaded) {
+      console.warn('Eutopia font may not be loaded properly. Check the font path and file.');
+    }
+  }, 1000);
 })();
 
 

@@ -5,6 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Text Breakout - Ball Create Text Animation</title>
     <link rel="stylesheet" href="./styles/main.css" />
+    <style>
+      @font-face {
+        font-family: 'Eutopia';
+        src: url('./assets/Eutopia/Eutopia.otf') format('opentype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: block; /* Ensure font loads before rendering */
+      }
+      
+      /* Test if font is loaded */
+      .font-loaded {
+        font-family: 'Eutopia', Arial, sans-serif;
+      }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
   </head>
   <body>
@@ -51,6 +65,17 @@
         <div id="image-output"></div>
         <div id="animation-container" class="animation-container">
           <!-- p5.js canvas will be inserted here -->
+        </div>
+        
+        <!-- Debug: Font test area -->
+        <div class="debug-section">
+          <h3>Font Debug (Eutopia Test)</h3>
+          <div id="font-test" style="font-family: 'Eutopia', Arial, sans-serif; font-size: 24px; border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+            This text should be in Eutopia font: Hello World 123
+          </div>
+          <div id="font-fallback" style="font-family: Arial, sans-serif; font-size: 24px; border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+            This text is in Arial (fallback): Hello World 123
+          </div>
         </div>
       </section>
     </main>
