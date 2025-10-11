@@ -495,7 +495,8 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                             fill(0); // Black - carveable background
                             break;
                         case SquareState.BLACK_PROTECTED:
-                            fill(255, 0, 0); // Red - protected text (for debugging)
+                            // fill(255, 0, 0); // Red - protected text (for debugging)
+                            fill(0); // Black - protected text
                             break;
                         case SquareState.WHITE_CARVED:
                             fill(255); // White - carved area
