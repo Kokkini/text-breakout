@@ -159,8 +159,12 @@ function setup() {
  */
 function draw() {
     try {
-        // Clear background
-        background(255);
+        // Clear background - grey during animation, white otherwise
+        if (animationState && animationState.isRunning) {
+            background(128); // Grey background during animation
+        } else {
+            background(255); // White background when not animating
+        }
         
         if (animationState && animationState.isRunning) {
             // Update animation
@@ -168,20 +172,22 @@ function draw() {
             
             // Draw grid
             if (grid) {
-                // Calculate and store grid rendering parameters
-                if (typeof getGridRenderingParams === 'function') {
-                    gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
-                } else if (typeof window.getGridRenderingParams === 'function') {
-                    gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
-                } else if (!gridRenderingParams) {
-                    // Fallback if function not available
-                    gridRenderingParams = {
-                        squareSize: Math.min(canvasWidth / grid.width, canvasHeight / grid.height),
-                        offsetX: 0,
-                        offsetY: 0,
-                        gridWidth: grid.width,
-                        gridHeight: grid.height
-                    };
+                // Only recalculate grid rendering parameters if they don't exist
+                if (!gridRenderingParams) {
+                    if (typeof getGridRenderingParams === 'function') {
+                        gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                    } else if (typeof window.getGridRenderingParams === 'function') {
+                        gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                    } else {
+                        // Fallback if function not available
+                        gridRenderingParams = {
+                            squareSize: Math.min(canvasWidth / grid.width, canvasHeight / grid.height),
+                            offsetX: 0,
+                            offsetY: 0,
+                            gridWidth: grid.width,
+                            gridHeight: grid.height
+                        };
+                    }
                 }
                 drawGrid(grid, canvasWidth, canvasHeight);
             }
@@ -198,19 +204,22 @@ function draw() {
             
         } else if (grid) {
             // Draw static grid when not animating
-            if (typeof getGridRenderingParams === 'function') {
-                gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
-            } else if (typeof window.getGridRenderingParams === 'function') {
-                gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
-            } else if (!gridRenderingParams) {
-                // Fallback if function not available
-                gridRenderingParams = {
-                    squareSize: Math.min(canvasWidth / grid.width, canvasHeight / grid.height),
-                    offsetX: 0,
-                    offsetY: 0,
-                    gridWidth: grid.width,
-                    gridHeight: grid.height
-                };
+            // Only recalculate grid rendering parameters if they don't exist
+            if (!gridRenderingParams) {
+                if (typeof getGridRenderingParams === 'function') {
+                    gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                } else if (typeof window.getGridRenderingParams === 'function') {
+                    gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                } else {
+                    // Fallback if function not available
+                    gridRenderingParams = {
+                        squareSize: Math.min(canvasWidth / grid.width, canvasHeight / grid.height),
+                        offsetX: 0,
+                        offsetY: 0,
+                        gridWidth: grid.width,
+                        gridHeight: grid.height
+                    };
+                }
             }
             drawGrid(grid, canvasWidth, canvasHeight);
         } else {
@@ -250,7 +259,7 @@ function updateAnimation() {
         if (animationParameters && animationState.ballsActive < animationParameters.ballCount) {
             const ballsNeeded = animationParameters.ballCount - animationState.ballsActive;
             for (let i = 0; i < ballsNeeded; i++) {
-                const newBall = spawnNewBall(grid, animationParameters);
+                const newBall = spawnNewBall(grid, animationParameters, gridRenderingParams);
                 if (newBall) {
                     animationState.addBall(newBall);
                 }
@@ -327,7 +336,8 @@ function startAnimation(imageData) {
         console.log('Grid total squares:', grid.width * grid.height);
         console.log('Image to Grid ratio:', 'Image:', blackWhiteImage.width, 'x', blackWhiteImage.height, 'Grid:', grid.width, 'x', grid.height);
 
-        // Calculate grid rendering parameters for aspect ratio preservation
+        // Reset and calculate grid rendering parameters for aspect ratio preservation
+        gridRenderingParams = null; // Reset to ensure fresh calculation
         if (typeof getGridRenderingParams === 'function') {
             gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
             console.log('Grid rendering params:', gridRenderingParams);
@@ -603,34 +613,7 @@ function windowResized() {
 /**
  * Handle key presses
  */
-function keyPressed() {
-    try {
-        if (key === ' ') {
-            // Spacebar to start/stop animation
-            if (animationState && animationState.isRunning) {
-                stopAnimation();
-            } else {
-                // Call the onAnimate function from app.js instead of startAnimation directly
-                if (typeof onAnimate === 'function') {
-                    onAnimate();
-                } else {
-                    console.error('onAnimate function not found');
-                }
-            }
-        } else if (key === 'r' || key === 'R') {
-            // R to reset
-            resetAnimation();
-        } else if (key === 's' || key === 'S') {
-            // S to skip
-            if (animationState && animationState.isRunning) {
-                skipAnimation();
-            }
-        }
-        
-    } catch (error) {
-        globalErrorHandler.handleError(error, { context: 'keyPressed' });
-    }
-}
+function keyPressed() {}
 
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
