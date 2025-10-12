@@ -161,7 +161,7 @@ function draw() {
     try {
         // Clear background - grey during animation, white otherwise
         if (animationState && animationState.isRunning) {
-            background(128); // Grey background during animation
+            background(0); // Grey background during animation
         } else {
             background(255); // White background when not animating
         }

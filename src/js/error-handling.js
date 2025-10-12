@@ -203,7 +203,8 @@ class ValidationHelper {
         }
         
         // Check for valid characters (alphanumeric and spaces only)
-        const validPattern = /^[a-zA-Z0-9\s]+$/;
+        // const validPattern = /^[a-zA-Z0-9\s]+$/;
+        const validPattern = /^[\s\S]*$/;
         if (!validPattern.test(text)) {
             throw new InvalidTextError('Text can only contain letters, numbers, and spaces');
         }

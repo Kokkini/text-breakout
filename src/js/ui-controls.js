@@ -124,7 +124,8 @@ function setupTextInputValidation() {
             // Prevent invalid characters
             textInput.addEventListener('keypress', function(e) {
                 const char = String.fromCharCode(e.which);
-                const validPattern = /[a-zA-Z0-9\s]/;
+                // const validPattern = /[a-zA-Z0-9\s]/;
+                const validPattern = /^[\s\S]*$/;
                 
                 if (!validPattern.test(char) && e.which !== 8 && e.which !== 13) {
                     e.preventDefault();
@@ -155,7 +156,9 @@ function validateTextInput(inputElement) {
         }
         
         // Check for valid characters
-        const validPattern = /^[a-zA-Z0-9\s]*$/;
+        // const validPattern = /^[a-zA-Z0-9\s]*$/;
+        const validPattern = /^[\s\S]*$/;
+
         if (!validPattern.test(text)) {
             showInputError('Text can only contain letters, numbers, and spaces');
             return false;

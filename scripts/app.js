@@ -281,7 +281,7 @@
       console.log('Grayscale pixel range:', 'Min:', Math.min(...pixels), 'Max:', Math.max(...pixels));
 
       // Debug: Display the grayscale image
-      displayGrayscaleImage(canvas.width, canvas.height, pixels);
+      // displayGrayscaleImage(canvas.width, canvas.height, pixels);
 
       // Create black and white pixel array (already at low resolution)
       const blackWhitePixels = new Uint8Array(canvas.width * canvas.height);
@@ -299,7 +299,7 @@
       console.log('Sample pixels:', blackWhitePixels.slice(0, 10));
 
       // Debug: Display the black and white image
-      displayBlackWhiteImage(canvas.width, canvas.height, blackWhitePixels);
+      // displayBlackWhiteImage(canvas.width, canvas.height, blackWhitePixels);
 
       // Create a simple image data object for animation
       const animationImageData = {
