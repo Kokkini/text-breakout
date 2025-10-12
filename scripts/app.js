@@ -1,12 +1,10 @@
 (function(){
   const input = document.getElementById('text-input');
-  const animateBtn = document.getElementById('animate-btn');
-  const stopBtn = document.getElementById('stop-btn');
-  const skipBtn = document.getElementById('skip-btn');
-  const clearBtn = document.getElementById('clear-btn');
+  const startNewBtn = document.getElementById('start-new-btn');
   const statusEl = document.getElementById('status');
 
-  const ALLOWED_REGEX = /^[a-z0-9 \n]+$/; // lowercase letters, digits, space, newlines
+  // const ALLOWED_REGEX = /^[a-z0-9 \n]+$/; // lowercase letters, digits, space, newlines
+  const ALLOWED_REGEX = /^[\s\S]*$/; // allow all characters
   const MAX_LEN = 200;
   
   // Animation state
@@ -111,27 +109,23 @@
   }
 
 
-  function updateAnimateButtonState(){
-    const text = input.value;
-    const valid = validateInput(toAllowedLower(text));
-    animateBtn.disabled = !valid;
-  }
-
-
-  // Make onClear globally available
-  window.onClear = function(){
-    input.value = '';
-    currentImage = null;
-    isAnimating = false;
-    updateAnimateButtonState();
-    setStatus('');
-    input.focus();
-    
-    // Reset animation state
-    if (typeof stopAnimation === 'function') {
-      stopAnimation();
+  // Start new animation function
+  function startNewAnimation() {
+    const text = input.value.trim();
+    if (!text) {
+      setStatus('Please enter some text first.');
+      return;
     }
-    document.body.classList.remove('animating', 'completed', 'error');
+    
+    // Stop current animation if running
+    if (isAnimating && typeof stopAnimation === 'function') {
+      stopAnimation();
+      // Reset local animation state to allow new animation to start
+      isAnimating = false;
+    }
+    
+    // Start new animation
+    onAnimate();
   }
   
   // Make onAnimate globally available
@@ -175,7 +169,7 @@
         const characters = line.split('');
         
         let lineWidth = 0;
-        let prevWasImage = false;
+    let prevWasImage = false;
         
         for (let i = 0; i < characters.length; i++) {
           const ch = characters[i];
@@ -183,16 +177,16 @@
           if (ch === ' ') {
             lineWidth += SPACE_GAP;
             prevWasImage = false;
-          } else {
+      } else {
             if (prevWasImage) lineWidth += CHAR_GAP;
             
             // Measure character width
             const charWidth = tempCtx.measureText(ch).width;
             lineWidth += charWidth;
-            prevWasImage = true;
-          }
-        }
-        
+        prevWasImage = true;
+      }
+    }
+
         lineWidths.push(lineWidth);
         maxLineWidth = Math.max(maxLineWidth, lineWidth);
       }
@@ -211,18 +205,18 @@
       console.log('Number of lines:', lines.length);
 
       // Create the actual canvas with proper dimensions
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
 
       // Generate new text image using Eutopia font
       console.log('onAnimate: Generating new text image with Eutopia font');
-      
-      // Fill white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
+
+    // Fill white background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       // Set text properties with Eutopia font
       ctx.fillStyle = '#000000';
       ctx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
@@ -258,9 +252,9 @@
           
           if (ch === ' ') {
             x += SPACE_GAP;
-            prevWasImage = false;
-          } else {
-            if (prevWasImage) x += CHAR_GAP;
+        prevWasImage = false;
+      } else {
+        if (prevWasImage) x += CHAR_GAP;
             
             // Draw the character using Eutopia font
             ctx.fillText(ch, x, y);
@@ -268,9 +262,9 @@
             // Get character width
             const charWidth = ctx.measureText(ch).width;
             x += charWidth;
-            prevWasImage = true;
-          }
-        }
+        prevWasImage = true;
+      }
+    }
       }
 
       // Now we can safely get image data from the clean canvas
@@ -320,7 +314,7 @@
         startAnimation(animationImageData);
       } else {
         setStatus('Animation system not loaded');
-        return;
+      return;
       }
 
       isAnimating = true;
@@ -333,31 +327,6 @@
     }
   }
   
-  // Make onStop globally available
-  window.onStop = function(){
-    if (!isAnimating) return;
-    
-    if (typeof stopAnimation === 'function') {
-      stopAnimation();
-    }
-    
-    isAnimating = false;
-    document.body.classList.remove('animating');
-    setStatus('Animation stopped');
-  }
-  
-  // Make onSkip globally available
-  window.onSkip = function(){
-    if (!isAnimating) return;
-    
-    if (typeof skipAnimation === 'function') {
-      skipAnimation();
-    }
-    
-    isAnimating = false;
-    document.body.classList.remove('animating');
-    setStatus('Animation skipped');
-  }
 
   // Check if Eutopia font is loaded
   function checkFontLoaded() {
@@ -380,17 +349,20 @@
 
 
   // Wire events
-  input.addEventListener('input', updateAnimateButtonState);
-  animateBtn.addEventListener('click', function() {
-    console.log('Animate button clicked');
-    onAnimate();
+  startNewBtn.addEventListener('click', function() {
+    console.log('Start New button clicked');
+    startNewAnimation();
   });
-  stopBtn.addEventListener('click', onStop);
-  skipBtn.addEventListener('click', onSkip);
-  clearBtn.addEventListener('click', onClear);
 
   // Init
-  updateAnimateButtonState();
+  // Set default text and start animation automatically
+  input.value = 'Hello\nWorld!';
+  
+  // Start animation automatically after a short delay to ensure everything is loaded
+  setTimeout(() => {
+    console.log('Auto-starting animation with default text: Hello\\nWorld!');
+    onAnimate();
+  }, 1500);
   
   // Check font loading after a short delay
   setTimeout(() => {

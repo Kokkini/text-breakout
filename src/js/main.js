@@ -385,10 +385,7 @@ function startAnimation(imageData) {
         animationState.totalBallsSpawned = initialBalls.length;
         
         // Update UI
-        document.getElementById('animate-btn').disabled = true;
-        document.getElementById('stop-btn').disabled = false;
-        document.getElementById('skip-btn').disabled = false;
-        document.getElementById('text-input').disabled = true;
+        // Text input remains enabled so users can edit text while animation runs
         
         // Add animating class to body
         document.body.classList.add('animating');
@@ -413,9 +410,6 @@ function stopAnimation() {
         }
         
         // Update UI
-        document.getElementById('animate-btn').disabled = false;
-        document.getElementById('stop-btn').disabled = true;
-        document.getElementById('skip-btn').disabled = true;
         document.getElementById('text-input').disabled = false;
         
         // Remove animating class
@@ -441,9 +435,6 @@ function completeAnimation() {
         }
         
         // Update UI
-        document.getElementById('animate-btn').disabled = false;
-        document.getElementById('stop-btn').disabled = true;
-        document.getElementById('skip-btn').disabled = true;
         document.getElementById('text-input').disabled = false;
         
         // Remove animating class
@@ -499,15 +490,8 @@ function resetAnimation() {
         
         // Reset UI - use correct element IDs from existing HTML
         const textInput = document.getElementById('text-input');
-        const animateBtn = document.getElementById('animate-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const skipBtn = document.getElementById('skip-btn');
-        
         if (textInput) textInput.value = '';
         if (textInput) textInput.disabled = false;
-        if (animateBtn) animateBtn.disabled = false;
-        if (stopBtn) stopBtn.disabled = true;
-        if (skipBtn) skipBtn.disabled = true;
         
         // Remove classes
         document.body.classList.remove('animating', 'completed', 'error');
