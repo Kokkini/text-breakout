@@ -503,13 +503,16 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                             break;
                         case SquareState.WHITE_EDGE:
                             fill(255); // White - edge padding
+                            // fill(0); // Black - edge padding
                             break;
                         default:
                             fill(128); // Gray for unknown states
                     }
                     
-                    // Draw the square
-                    rect(pixelX, pixelY, squareSize, squareSize);
+                    // Draw the square a bit bigger to avoid pixel imperfection
+                    noStroke();
+                    rect(pixelX - 1, pixelY - 1, squareSize + 2, squareSize + 2);
+                    // rect(pixelX, pixelY, squareSize, squareSize);
                 }
             }
         }
