@@ -151,6 +151,272 @@ function updateBallPositionWithSubstepping(ball, grid, gridRenderingParams) {
 }
 
 /**
+ * Update ball position with sub-stepping and pre-collision checking
+ * This function checks for collisions BEFORE updating ball position
+ * @param {Ball} ball - Ball to update
+ * @param {Grid} grid - Grid for collision detection
+ * @param {Object} gridRenderingParams - Grid rendering parameters
+ * @returns {Object} Collision result if any collision occurred
+ */
+function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridRenderingParams) {
+    try {
+        if (!(ball instanceof Ball)) {
+            throw new Error('Ball must be a Ball object');
+        }
+        let eps = 1e-6;
+        
+        // Store original position
+        const originalX = ball.x;
+        const originalY = ball.y;
+        
+        // Calculate movement distance
+        const movementDistance = Math.sqrt(ball.velocityX * ball.velocityX + ball.velocityY * ball.velocityY);
+        
+        // Determine safe movement threshold (half of square size)
+        let maxSafeDistance = 10; // Default fallback
+        if (gridRenderingParams && gridRenderingParams.squareSize) {
+            maxSafeDistance = gridRenderingParams.squareSize * 0.5;
+        } else {
+            console.warn('Fallback to max safe distance of 10 pixels');
+        }
+        
+        // Helper function to check if a square is collide-able
+        function isCollideable(square) {
+            if (!square) return false;
+            return square.state === SquareState.BLACK_CARVEABLE || 
+                   square.state === SquareState.BLACK_PROTECTED ||
+                   (square.state === SquareState.WHITE_EDGE && 
+                    (square.x === 0 || square.x === grid.width - 1 || 
+                     square.y === 0 || square.y === grid.height - 1));
+        }
+        
+        // Helper function to get 8 adjacent squares
+        function getAdjacentSquares(currentX, currentY) {
+            const { squareSize } = gridRenderingParams;
+            return [
+                getSquareAtPixel(grid, currentX, currentY - squareSize, gridRenderingParams), // Up
+                getSquareAtPixel(grid, currentX, currentY + squareSize, gridRenderingParams), // Down
+                getSquareAtPixel(grid, currentX - squareSize, currentY, gridRenderingParams), // Left
+                getSquareAtPixel(grid, currentX + squareSize, currentY, gridRenderingParams),  // Right
+                getSquareAtPixel(grid, currentX - squareSize, currentY - squareSize, gridRenderingParams), // Up-Left
+                getSquareAtPixel(grid, currentX - squareSize, currentY + squareSize, gridRenderingParams), // Down-Left
+                getSquareAtPixel(grid, currentX + squareSize, currentY - squareSize, gridRenderingParams), // Up-Right
+                getSquareAtPixel(grid, currentX + squareSize, currentY + squareSize, gridRenderingParams) // Down-Right
+
+            ];
+        }
+        
+        // If movement is small enough, use simple pre-collision check
+        if (movementDistance <= maxSafeDistance) {
+            // Calculate next position
+            const nextX = ball.x + ball.velocityX;
+            const nextY = ball.y + ball.velocityY;
+            
+            // Check bounds first
+            if (nextX < 0 || nextX > width || nextY < 0 || nextY > height) {
+                ball.isActive = false;
+                return { hasCollision: false };
+            }
+            
+            // Get current square and next square
+            const currentSquare = getSquareAtPixel(grid, ball.x, ball.y, gridRenderingParams);
+            const nextSquare = getSquareAtPixel(grid, nextX, nextY, gridRenderingParams);
+            
+            // If next position would be in a collide-able square, check for collision
+            if (isCollideable(nextSquare)) {
+                // Get adjacent squares to current position
+                const adjacentSquares = getAdjacentSquares(ball.x, ball.y);
+                
+                // Check ray intersection with each collide-able adjacent square
+                for (const adjacentSquare of adjacentSquares) {
+                    if (isCollideable(adjacentSquare)) {
+                        // Calculate square boundaries
+                        const { squareSize, offsetX, offsetY } = gridRenderingParams;
+                        const squareLeft = offsetX + (adjacentSquare.x * squareSize);
+                        const squareRight = offsetX + ((adjacentSquare.x + 1) * squareSize);
+                        const squareTop = offsetY + (adjacentSquare.y * squareSize);
+                        const squareBottom = offsetY + ((adjacentSquare.y + 1) * squareSize);
+                        
+                        // Cast ray from current position to next position
+                        const intersection = findRaySquareIntersection(
+                            ball.x, ball.y,    // Ray start (current position)
+                            nextX, nextY,      // Ray end (next position)
+                            squareLeft, squareTop, squareRight, squareBottom
+                        );
+                        
+                        if (intersection) {
+                            // Calculate normal vector based on intersection side
+                            let normalX = 0, normalY = 0;
+                            switch (intersection.side) {
+                                case 'left':
+                                    normalX = -1;
+                                    break;
+                                case 'right':
+                                    normalX = 1;
+                                    break;
+                                case 'top':
+                                    normalY = -1;
+                                    break;
+                                case 'bottom':
+                                    normalY = 1;
+                                    break;
+                                case 'corner':
+                                    // Corner collision - calculate diagonal normal
+                                    const cornerX = intersection.x - (squareLeft + squareRight) / 2;
+                                    const cornerY = intersection.y - (squareTop + squareBottom) / 2;
+                                    const length = Math.sqrt(cornerX * cornerX + cornerY * cornerY);
+                                    normalX = cornerX / length;
+                                    normalY = cornerY / length;
+                                    break;
+                            }
+                            
+                            // Update ball position to collision point + epsilon
+                            ball.x = intersection.x + normalX * eps;
+                            ball.y = intersection.y + normalY * eps;
+                            
+                            // Return collision result
+                            return {
+                                hasCollision: true,
+                                square: adjacentSquare,
+                                isEdge: adjacentSquare.state === SquareState.WHITE_EDGE,
+                                collisionPoint: { x: intersection.x, y: intersection.y },
+                                normal: { x: normalX, y: normalY },
+                                shouldCarve: adjacentSquare.state === SquareState.BLACK_CARVEABLE,
+                                shouldBounce: adjacentSquare.state === SquareState.BLACK_PROTECTED || 
+                                            adjacentSquare.state === SquareState.WHITE_EDGE
+                            };
+                        }
+                    }
+                }
+            }
+            
+            // No collision detected, update position normally
+            ball.updatePosition();
+            return { hasCollision: false };
+        }
+        
+        // Movement is too large, use sub-stepping with pre-collision check
+        const numSteps = Math.ceil(movementDistance / maxSafeDistance);
+        const stepVelocityX = ball.velocityX / numSteps;
+        const stepVelocityY = ball.velocityY / numSteps;
+        
+        // Store original velocity
+        const originalVelocityX = ball.velocityX;
+        const originalVelocityY = ball.velocityY;
+        
+        // Temporarily set step velocity
+        ball.velocityX = stepVelocityX;
+        ball.velocityY = stepVelocityY;
+        
+        let collisionResult = { hasCollision: false };
+        
+        // Perform sub-steps with pre-collision checking
+        for (let step = 0; step < numSteps; step++) {
+            // Calculate next position for this step
+            const nextX = ball.x + stepVelocityX;
+            const nextY = ball.y + stepVelocityY;
+            
+            // Check bounds
+            if (nextX < 0 || nextX > width || nextY < 0 || nextY > height) {
+                ball.isActive = false;
+                break;
+            }
+            
+            // Get current square and next square
+            const currentSquare = getSquareAtPixel(grid, ball.x, ball.y, gridRenderingParams);
+            const nextSquare = getSquareAtPixel(grid, nextX, nextY, gridRenderingParams);
+            
+            // If next position would be in a collide-able square, check for collision
+            if (isCollideable(nextSquare)) {
+                // Get adjacent squares to current position
+                const adjacentSquares = getAdjacentSquares(ball.x, ball.y);
+                
+                // Check ray intersection with each collide-able adjacent square
+                for (const adjacentSquare of adjacentSquares) {
+                    if (isCollideable(adjacentSquare)) {
+                        // Calculate square boundaries
+                        const { squareSize, offsetX, offsetY } = gridRenderingParams;
+                        const squareLeft = offsetX + (adjacentSquare.x * squareSize);
+                        const squareRight = offsetX + ((adjacentSquare.x + 1) * squareSize);
+                        const squareTop = offsetY + (adjacentSquare.y * squareSize);
+                        const squareBottom = offsetY + ((adjacentSquare.y + 1) * squareSize);
+                        
+                        // Cast ray from current position to next position
+                        const intersection = findRaySquareIntersection(
+                            ball.x, ball.y,    // Ray start (current position)
+                            nextX, nextY,      // Ray end (next position)
+                            squareLeft, squareTop, squareRight, squareBottom
+                        );
+                        
+                        if (intersection) {
+                            // Calculate normal vector based on intersection side
+                            let normalX = 0, normalY = 0;
+                            switch (intersection.side) {
+                                case 'left':
+                                    normalX = -1;
+                                    break;
+                                case 'right':
+                                    normalX = 1;
+                                    break;
+                                case 'top':
+                                    normalY = -1;
+                                    break;
+                                case 'bottom':
+                                    normalY = 1;
+                                    break;
+                                case 'corner':
+                                    // Corner collision - calculate diagonal normal
+                                    const cornerX = intersection.x - (squareLeft + squareRight) / 2;
+                                    const cornerY = intersection.y - (squareTop + squareBottom) / 2;
+                                    const length = Math.sqrt(cornerX * cornerX + cornerY * cornerY);
+                                    normalX = cornerX / length;
+                                    normalY = cornerY / length;
+                                    break;
+                            }
+                            
+                            // Update ball position to collision point + epsilon
+                            ball.x = intersection.x + normalX * eps;
+                            ball.y = intersection.y + normalY * eps;
+                            
+                            // Set collision result
+                            collisionResult = {
+                                hasCollision: true,
+                                square: adjacentSquare,
+                                isEdge: adjacentSquare.state === SquareState.WHITE_EDGE,
+                                collisionPoint: { x: intersection.x, y: intersection.y },
+                                normal: { x: normalX, y: normalY },
+                                shouldCarve: adjacentSquare.state === SquareState.BLACK_CARVEABLE,
+                                shouldBounce: adjacentSquare.state === SquareState.BLACK_PROTECTED || 
+                                            adjacentSquare.state === SquareState.WHITE_EDGE
+                            };
+                            
+                            // Restore original velocity and return
+                            ball.velocityX = originalVelocityX;
+                            ball.velocityY = originalVelocityY;
+                            return collisionResult;
+                        }
+                    }
+                }
+            }
+            
+            // No collision detected for this step, update position
+            ball.updatePosition();
+        }
+        
+        // Restore original velocity
+        ball.velocityX = originalVelocityX;
+        ball.velocityY = originalVelocityY;
+        
+        return collisionResult;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { ball: ball });
+        ball.isActive = false; // Deactivate ball on error
+        return { hasCollision: false };
+    }
+}
+
+/**
  * Update ball position based on velocity (legacy function for compatibility)
  * @param {Ball} ball - Ball to update
  */
@@ -279,11 +545,50 @@ function calculateCollisionNormal(ball, square, grid, gridRenderingParams) {
         const prevX = ball.x - ball.velocityX;
         const prevY = ball.y - ball.velocityY;
         
-        // Use ray casting to find intersection with square boundaries
-        const intersection = findRaySquareIntersection(
-            prevX, prevY, ball.x, ball.y,
-            squareLeft, squareTop, squareRight, squareBottom
+        // Use ray casting to find intersection with square boundaries for the square and the 4 adjacent squares
+        let squares = [square];
+        if (square.x > 0) {
+            let s = grid.getSquare(square.x - 1, square.y);
+            squares.push(s);
+        }
+        if (square.x < grid.width - 1) {
+            let s = grid.getSquare(square.x + 1, square.y);
+            squares.push(s);
+        }
+        if (square.y > 0) {
+            let s = grid.getSquare(square.x, square.y - 1);
+            squares.push(s);
+        }
+        if (square.y < grid.height - 1) {
+            let s = grid.getSquare(square.x, square.y + 1);
+            squares.push(s);
+        }
+        let intersections = [];
+        for (let s of squares) {
+            if (s.state === SquareState.WHITE_CARVED) {
+                continue;
+            }
+            const sLeft = offsetX + (s.x * squareSize);
+            const sRight = offsetX + ((s.x + 1) * squareSize);
+            const sTop = offsetY + (s.y * squareSize);
+            const sBottom = offsetY + ((s.y + 1) * squareSize);
+
+            let sIntersection = findRaySquareIntersection(
+                prevX, prevY, ball.x, ball.y,
+                sLeft, sTop, sRight, sBottom
+            );
+            if (sIntersection) {
+                intersections.push(sIntersection);
+            }
+        }
+        // get the intersection with the lowest t value
+        const intersection = intersections.reduce((closest, current) => 
+            current.t < closest.t ? current : closest
         );
+        // const intersection = findRaySquareIntersection(
+        //     prevX, prevY, ball.x, ball.y,
+        //     squareLeft, squareTop, squareRight, squareBottom
+        // );
         
         if (intersection) {
             // Use the precise intersection point as collision point
@@ -788,7 +1093,8 @@ function updateAllBalls(balls, grid, gridRenderingParams, animationParameters) {
             }
             
             // Update ball position with sub-stepping collision detection
-            const collisionResult = updateBallPositionWithSubstepping(ball, grid, gridRenderingParams);
+            // const collisionResult = updateBallPositionWithSubstepping(ball, grid, gridRenderingParams);
+            const collisionResult = updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridRenderingParams);
             results.ballsUpdated++;
             
             // Handle collision if one occurred during sub-stepping
