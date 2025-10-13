@@ -176,8 +176,10 @@ function draw() {
                 if (!gridRenderingParams) {
                     if (typeof getGridRenderingParams === 'function') {
                         gridRenderingParams = getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                        if (typeof window !== 'undefined') window.gridRenderingParams = gridRenderingParams;
                     } else if (typeof window.getGridRenderingParams === 'function') {
                         gridRenderingParams = window.getGridRenderingParams(grid, canvasWidth, canvasHeight);
+                        if (typeof window !== 'undefined') window.gridRenderingParams = gridRenderingParams;
                     } else {
                         // Fallback if function not available
                         gridRenderingParams = {
@@ -187,7 +189,10 @@ function draw() {
                             gridWidth: grid.width,
                             gridHeight: grid.height
                         };
+                        if (typeof window !== 'undefined') window.gridRenderingParams = gridRenderingParams;
                     }
+                } else {
+                    if (typeof window !== 'undefined') window.gridRenderingParams = gridRenderingParams;
                 }
                 drawGrid(grid, canvasWidth, canvasHeight);
             }
@@ -221,6 +226,7 @@ function draw() {
                     };
                 }
             }
+            if (typeof window !== 'undefined') window.gridRenderingParams = gridRenderingParams;
             drawGrid(grid, canvasWidth, canvasHeight);
         } else {
             // Show welcome message
@@ -380,6 +386,7 @@ function startAnimation(imageData) {
         
         console.log('About to spawn initial balls, gridRenderingParams:', gridRenderingParams);
         const initialBalls = spawnInitialBalls(grid, animationParameters, gridRenderingParams);
+        
         animationState.balls = initialBalls;
         animationState.ballsActive = initialBalls.length;
         animationState.totalBallsSpawned = initialBalls.length;

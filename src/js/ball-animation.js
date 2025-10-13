@@ -3,6 +3,7 @@
  * Handles ball creation, physics, movement, and collision detection
  */
 
+
 /**
  * Create new ball object
  * @param {number} x - Initial X position
@@ -68,20 +69,15 @@ function updateBallPositionWithSubstepping(ball, grid, gridRenderingParams) {
         // Calculate movement distance
         const movementDistance = Math.sqrt(ball.velocityX * ball.velocityX + ball.velocityY * ball.velocityY);
         
-        // Determine safe movement threshold (half of square size)
-        let maxSafeDistance = 10; // Default fallback
-        if (gridRenderingParams && gridRenderingParams.squareSize) {
-            maxSafeDistance = gridRenderingParams.squareSize * 0.5;
-        } else {
-            console.warn('Fallback to max safe distance of 10 pixels');
-        }
+        // Determine safe movement threshold in grid units (half square)
+        let maxSafeDistance = 0.5;
         // console.log('Max safe distance: ', maxSafeDistance, 'Movement distance: ', movementDistance);
         // If movement is small enough, use simple update
         if (movementDistance <= maxSafeDistance) {
             ball.updatePosition();
             
-            // Check bounds and deactivate if out of bounds
-            if (ball.x < 0 || ball.x > width || ball.y < 0 || ball.y > height) {
+            // Check bounds in grid units and deactivate if out of bounds
+            if (ball.x < 0 || ball.x > grid.width || ball.y < 0 || ball.y > grid.height) {
                 ball.isActive = false;
             }
             
@@ -118,14 +114,14 @@ function updateBallPositionWithSubstepping(ball, grid, gridRenderingParams) {
             // Update position for this step
             ball.updatePosition();
             
-            // Check bounds
-            if (ball.x < 0 || ball.x > width || ball.y < 0 || ball.y > height) {
+            // Check bounds in grid units
+            if (ball.x < 0 || ball.x > grid.width || ball.y < 0 || ball.y > grid.height) {
                 ball.isActive = false;
                 break;
             }
             
             // Check for collision at this step
-            const stepCollision = checkBallCollision(ball, grid, gridRenderingParams);
+                const stepCollision = checkBallCollision(ball, grid, gridRenderingParams);
             if (stepCollision.hasCollision) {
                 collisionResult = stepCollision;
                 break; // Stop at first collision
@@ -172,13 +168,8 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
         // Calculate movement distance
         const movementDistance = Math.sqrt(ball.velocityX * ball.velocityX + ball.velocityY * ball.velocityY);
         
-        // Determine safe movement threshold (half of square size)
-        let maxSafeDistance = 10; // Default fallback
-        if (gridRenderingParams && gridRenderingParams.squareSize) {
-            maxSafeDistance = gridRenderingParams.squareSize * 0.5;
-        } else {
-            console.warn('Fallback to max safe distance of 10 pixels');
-        }
+        // Determine safe movement threshold in grid units (half square)
+        let maxSafeDistance = 0.5;
         
         // Helper function to check if a square is collide-able
         function isCollideable(square) {
@@ -192,17 +183,15 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
         
         // Helper function to get 8 adjacent squares
         function getAdjacentSquares(currentX, currentY) {
-            const { squareSize } = gridRenderingParams;
             return [
-                getSquareAtPixel(grid, currentX, currentY - squareSize, gridRenderingParams), // Up
-                getSquareAtPixel(grid, currentX, currentY + squareSize, gridRenderingParams), // Down
-                getSquareAtPixel(grid, currentX - squareSize, currentY, gridRenderingParams), // Left
-                getSquareAtPixel(grid, currentX + squareSize, currentY, gridRenderingParams),  // Right
-                getSquareAtPixel(grid, currentX - squareSize, currentY - squareSize, gridRenderingParams), // Up-Left
-                getSquareAtPixel(grid, currentX - squareSize, currentY + squareSize, gridRenderingParams), // Down-Left
-                getSquareAtPixel(grid, currentX + squareSize, currentY - squareSize, gridRenderingParams), // Up-Right
-                getSquareAtPixel(grid, currentX + squareSize, currentY + squareSize, gridRenderingParams) // Down-Right
-
+                getSquareAtGrid(grid, currentX, currentY - 1), // Up
+                getSquareAtGrid(grid, currentX, currentY + 1), // Down
+                getSquareAtGrid(grid, currentX - 1, currentY), // Left
+                getSquareAtGrid(grid, currentX + 1, currentY), // Right
+                getSquareAtGrid(grid, currentX - 1, currentY - 1), // Up-Left
+                getSquareAtGrid(grid, currentX - 1, currentY + 1), // Down-Left
+                getSquareAtGrid(grid, currentX + 1, currentY - 1), // Up-Right
+                getSquareAtGrid(grid, currentX + 1, currentY + 1) // Down-Right
             ];
         }
         
@@ -219,8 +208,8 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
             }
             
             // Get current square and next square
-            const currentSquare = getSquareAtPixel(grid, ball.x, ball.y, gridRenderingParams);
-            const nextSquare = getSquareAtPixel(grid, nextX, nextY, gridRenderingParams);
+            const currentSquare = getSquareAtGrid(grid, ball.x, ball.y);
+            const nextSquare = getSquareAtGrid(grid, nextX, nextY);
             
             // If next position would be in a collide-able square, check for collision
             if (isCollideable(nextSquare)) {
@@ -231,11 +220,10 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
                 for (const adjacentSquare of adjacentSquares) {
                     if (isCollideable(adjacentSquare)) {
                         // Calculate square boundaries
-                        const { squareSize, offsetX, offsetY } = gridRenderingParams;
-                        const squareLeft = offsetX + (adjacentSquare.x * squareSize);
-                        const squareRight = offsetX + ((adjacentSquare.x + 1) * squareSize);
-                        const squareTop = offsetY + (adjacentSquare.y * squareSize);
-                        const squareBottom = offsetY + ((adjacentSquare.y + 1) * squareSize);
+                        const squareLeft = adjacentSquare.x;
+                        const squareRight = adjacentSquare.x + 1;
+                        const squareTop = adjacentSquare.y;
+                        const squareBottom = adjacentSquare.y + 1;
                         
                         // Cast ray from current position to next position
                         const intersection = findRaySquareIntersection(
@@ -323,8 +311,8 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
             }
             
             // Get current square and next square
-            const currentSquare = getSquareAtPixel(grid, ball.x, ball.y, gridRenderingParams);
-            const nextSquare = getSquareAtPixel(grid, nextX, nextY, gridRenderingParams);
+            const currentSquare = getSquareAtGrid(grid, ball.x, ball.y);
+            const nextSquare = getSquareAtGrid(grid, nextX, nextY);
             
             // If next position would be in a collide-able square, check for collision
             if (isCollideable(nextSquare)) {
@@ -335,11 +323,10 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
                 for (const adjacentSquare of adjacentSquares) {
                     if (isCollideable(adjacentSquare)) {
                         // Calculate square boundaries
-                        const { squareSize, offsetX, offsetY } = gridRenderingParams;
-                        const squareLeft = offsetX + (adjacentSquare.x * squareSize);
-                        const squareRight = offsetX + ((adjacentSquare.x + 1) * squareSize);
-                        const squareTop = offsetY + (adjacentSquare.y * squareSize);
-                        const squareBottom = offsetY + ((adjacentSquare.y + 1) * squareSize);
+                        const squareLeft = adjacentSquare.x;
+                        const squareRight = adjacentSquare.x + 1;
+                        const squareTop = adjacentSquare.y;
+                        const squareBottom = adjacentSquare.y + 1;
                         
                         // Cast ray from current position to next position
                         const intersection = findRaySquareIntersection(
@@ -502,12 +489,7 @@ function findRaySquareIntersection(rayStartX, rayStartY, rayEndX, rayEndY, squar
 function calculateCollisionNormal(ball, square, grid, gridRenderingParams) {
     let normalX = 0, normalY = 0;
     let collisionPoint = { x: ball.x, y: ball.y }; // Default fallback
-
-    if (!gridRenderingParams) {
-        console.warn('gridRenderingParams is undefined, using fallback values');
-        return { normal: { x: 0, y: 0 }, collisionPoint: { x: ball.x, y: ball.y } };
-    }
-    const { squareSize, offsetX, offsetY } = gridRenderingParams;
+    // Operate entirely in grid units
     
     // Check if this is an edge collision
     const isAtGridBoundary = (square.x === 0 || square.x === grid.width - 1 || 
@@ -518,28 +500,28 @@ function calculateCollisionNormal(ball, square, grid, gridRenderingParams) {
         if (square.x === 0) {
             // Hit left edge of the grid, right edge of the square
             normalX = 1;
-            collisionPoint = { x: offsetX + squareSize, y: ball.y };
+            collisionPoint = { x: 1, y: ball.y };
         } else if (square.x === grid.width - 1) {
             // Hit right edge of the grid, left edge of the square
             normalX = -1;
-            collisionPoint = { x: offsetX + square.x * squareSize, y: ball.y };
+            collisionPoint = { x: square.x, y: ball.y };
         } else if (square.y === 0) {
             // Hit top edge of the grid, bottom edge of the square
             normalY = 1;
-            collisionPoint = { x: ball.x, y: offsetY + squareSize };
+            collisionPoint = { x: ball.x, y: 1 };
         } else if (square.y === grid.height - 1) {
             // Hit bottom edge of the grid, top edge of the square
             normalY = -1;
-            collisionPoint = { x: ball.x, y: offsetY + square.y * squareSize };
+            collisionPoint = { x: ball.x, y: square.y };
         }
     } else {
         // Square collision - use ray casting to find the actual collision point
         
-        // Convert square grid coordinates to pixel coordinates
-        const squareLeft = offsetX + (square.x * squareSize);
-        const squareRight = offsetX + ((square.x + 1) * squareSize);
-        const squareTop = offsetY + (square.y * squareSize);
-        const squareBottom = offsetY + ((square.y + 1) * squareSize);
+        // Square boundaries in grid units
+        const squareLeft = square.x;
+        const squareRight = square.x + 1;
+        const squareTop = square.y;
+        const squareBottom = square.y + 1;
         
         // Calculate ball's previous position (before collision)
         const prevX = ball.x - ball.velocityX;
@@ -568,10 +550,10 @@ function calculateCollisionNormal(ball, square, grid, gridRenderingParams) {
             if (s.state === SquareState.WHITE_CARVED) {
                 continue;
             }
-            const sLeft = offsetX + (s.x * squareSize);
-            const sRight = offsetX + ((s.x + 1) * squareSize);
-            const sTop = offsetY + (s.y * squareSize);
-            const sBottom = offsetY + ((s.y + 1) * squareSize);
+            const sLeft = s.x;
+            const sRight = s.x + 1;
+            const sTop = s.y;
+            const sBottom = s.y + 1;
 
             let sIntersection = findRaySquareIntersection(
                 prevX, prevY, ball.x, ball.y,
@@ -622,8 +604,8 @@ function calculateCollisionNormal(ball, square, grid, gridRenderingParams) {
         } else {
             // Fallback: use ball position relative to square center
             console.log('Fallback to ball position relative to square center');
-            const ballGridX = (ball.x - offsetX) / squareSize;
-            const ballGridY = (ball.y - offsetY) / squareSize;
+            const ballGridX = ball.x;
+            const ballGridY = ball.y;
             const squareCenterX = square.x + 0.5;
             const squareCenterY = square.y + 0.5;
             
@@ -665,7 +647,7 @@ function checkBallCollision(ball, grid, gridRenderingParams) {
         }
         
         // Get the square the ball is currently in
-        const square = getSquareAtPixel(grid, ball.x, ball.y, gridRenderingParams);
+        const square = getSquareAtGrid(grid, ball.x, ball.y);
         
         if (!square) {
             return { hasCollision: false };
@@ -959,13 +941,8 @@ function spawnNewBall(grid, parameters, gridRenderingParams) {
             throw new Error('Parameters must be an AnimationParameters object');
         }
         
-        // Calculate ball diameter (half of square edge length)
-        if (!gridRenderingParams) {
-            console.warn('gridRenderingParams is undefined in spawnNewBall, using fallback');
-            return null;
-        }
-        const { squareSize } = gridRenderingParams;
-        const ballDiameter = squareSize * 0.5;
+        // Calculate ball diameter in grid units (half of a square)
+        const ballDiameter = 0.5;
         
         // Find a random edge position
         const edgePositions = getEdgePositions(grid);
@@ -974,14 +951,14 @@ function spawnNewBall(grid, parameters, gridRenderingParams) {
         }
         
         const randomEdge = edgePositions[Math.floor(Math.random() * edgePositions.length)];
-        const pixelCoords = getSquarePixelCoordinates(grid, randomEdge.x, randomEdge.y, gridRenderingParams);
         
-        // Position ball at center of edge square
-        const ballX = pixelCoords.x + pixelCoords.width / 2;
-        const ballY = pixelCoords.y + pixelCoords.height / 2;
+        // Position ball at center of edge square (grid units)
+        const ballX = randomEdge.x + 0.5;
+        const ballY = randomEdge.y + 0.5;
         
         // Random initial velocity
-        const speed = 4 * parameters.movementSpeed;
+        // Speed in grid units per frame
+        const speed = 0.5 * parameters.movementSpeed;
         const angle = Math.random() * Math.PI * 2;
         const velocityX = Math.cos(angle) * speed;
         const velocityY = Math.sin(angle) * speed;
@@ -1139,9 +1116,20 @@ function drawBalls(balls) {
         
         for (const ball of balls) {
             if (ball.isActive) {
-                fill(0); // Black balls
+                // Convert grid coordinates to pixel coordinates for rendering
+                let pixelX = ball.x;
+                let pixelY = ball.y;
+                let pixelDiameter = ball.diameter;
+                if (typeof window !== 'undefined' && window.gridRenderingParams) {
+                    const params = window.gridRenderingParams;
+                    const { squareSize, offsetX, offsetY } = params;
+                    pixelX = offsetX + ball.x * squareSize;
+                    pixelY = offsetY + ball.y * squareSize;
+                    pixelDiameter = ball.diameter * squareSize;
+                }
+                fill(0);
                 noStroke();
-                ellipse(ball.x, ball.y, ball.diameter, ball.diameter);
+                ellipse(pixelX, pixelY, pixelDiameter, pixelDiameter);
             }
         }
         

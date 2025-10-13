@@ -269,6 +269,62 @@ function getSquareAtPixel(grid, pixelX, pixelY, gridRenderingParams) {
 }
 
 /**
+ * Get square at grid coordinates (grid units)
+ * @param {Grid} grid - Grid to search
+ * @param {number} gridX - Grid X coordinate (can be fractional; floors to index)
+ * @param {number} gridY - Grid Y coordinate (can be fractional; floors to index)
+ * @returns {Square|null} Square at coordinates or null
+ */
+function getSquareAtGrid(grid, gridX, gridY) {
+    try {
+        if (!(grid instanceof Grid)) {
+            throw new Error('Grid must be a Grid object');
+        }
+        const ix = Math.floor(gridX);
+        const iy = Math.floor(gridY);
+        if (ix < 0 || iy < 0 || ix >= grid.width || iy >= grid.height) {
+            return null;
+        }
+        return grid.getSquare(ix, iy);
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid, gridX: gridX, gridY: gridY });
+        return null;
+    }
+}
+
+/**
+ * Convert grid coordinates (units) to pixel coordinates using rendering params
+ * @param {number} gridX
+ * @param {number} gridY
+ * @param {Object} gridRenderingParams
+ * @returns {{x:number,y:number}}
+ */
+function gridToPixel(gridX, gridY, gridRenderingParams) {
+    if (!gridRenderingParams) return { x: 0, y: 0 };
+    const { squareSize, offsetX, offsetY } = gridRenderingParams;
+    return {
+        x: offsetX + gridX * squareSize,
+        y: offsetY + gridY * squareSize
+    };
+}
+
+/**
+ * Convert pixel coordinates to grid coordinates (fractional) using rendering params
+ * @param {number} pixelX
+ * @param {number} pixelY
+ * @param {Object} gridRenderingParams
+ * @returns {{x:number,y:number}}
+ */
+function pixelToGrid(pixelX, pixelY, gridRenderingParams) {
+    if (!gridRenderingParams) return { x: 0, y: 0 };
+    const { squareSize, offsetX, offsetY } = gridRenderingParams;
+    return {
+        x: (pixelX - offsetX) / squareSize,
+        y: (pixelY - offsetY) / squareSize
+    };
+}
+
+/**
  * Get pixel coordinates for a square
  * @param {Grid} grid - Grid containing the square
  * @param {number} gridX - Grid X coordinate
@@ -586,8 +642,11 @@ if (typeof window !== 'undefined') {
     window.updateSquareState = updateSquareState;
     window.checkAdjacentSquaresForProtected = checkAdjacentSquaresForProtected;
     window.isValidStateTransition = isValidStateTransition;
+    window.getSquareAtGrid = getSquareAtGrid;
     window.getSquareAtPixel = getSquareAtPixel;
     window.getSquarePixelCoordinates = getSquarePixelCoordinates;
+    window.gridToPixel = gridToPixel;
+    window.pixelToGrid = pixelToGrid;
     window.countSquaresByState = countSquaresByState;
     window.isAnimationComplete = isAnimationComplete;
     window.getCarveableSquaresAdjacentToProtected = getCarveableSquaresAdjacentToProtected;
@@ -604,8 +663,11 @@ if (typeof module !== 'undefined' && module.exports) {
         updateSquareState,
         checkAdjacentSquaresForProtected,
         isValidStateTransition,
+        getSquareAtGrid,
         getSquareAtPixel,
         getSquarePixelCoordinates,
+        gridToPixel,
+        pixelToGrid,
         countSquaresByState,
         isAnimationComplete,
         getCarveableSquaresAdjacentToProtected,

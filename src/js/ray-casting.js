@@ -50,15 +50,16 @@ function castRay(startX, startY, angle, grid, maxDistance, gridRenderingParams) 
             throw new Error('Max distance must be a positive number');
         }
         
-        const originalSquare = getSquareAtPixel(grid, startX, startY, gridRenderingParams);
+        // Operate in grid units
+        const originalSquare = getSquareAtGrid(grid, startX, startY);
         const intersections = [];
         
         // Calculate ray direction
         const dx = Math.cos(angle);
         const dy = Math.sin(angle);
         
-        // Step along the ray
-        const stepSize = 1; // 1 pixel steps
+        // Step along the ray in grid units
+        const stepSize = 0.5;
         let distance = stepSize;
         
         while (distance < maxDistance) {
@@ -66,7 +67,7 @@ function castRay(startX, startY, angle, grid, maxDistance, gridRenderingParams) 
             const y = startY + dy * distance;
             
             // Get the square at this position
-            const square = getSquareAtPixel(grid, x, y, gridRenderingParams);
+            const square = getSquareAtGrid(grid, x, y);
             
             if (square && square !== originalSquare && square.state !== SquareState.WHITE_CARVED && square.state !== SquareState.WHITE_EDGE) {
                 // Found an intersection
