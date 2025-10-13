@@ -196,7 +196,7 @@
       const textHeight = lines.length * LINE_HEIGHT;
       
       // Add minimal padding around the text
-      const padding = 0;
+      const padding = 1;
       const canvasWidth = textWidth + (padding * 2);
       const canvasHeight = textHeight + (padding * 2);
       

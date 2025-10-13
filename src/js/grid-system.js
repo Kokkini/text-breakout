@@ -126,6 +126,46 @@ function createGrid(blackWhiteImage, padding = 5) {
  * @param {number} y - Square Y coordinate
  * @param {string} newState - New state for square
  */
+/**
+ * Check adjacent squares and change BLACK_PROTECTED squares to red when a BLACK_CARVEABLE square is carved
+ * @param {Grid} grid - Grid containing the squares
+ * @param {number} x - X coordinate of the carved square
+ * @param {number} y - Y coordinate of the carved square
+ */
+function checkAdjacentSquaresForProtected(grid, x, y) {
+    try {
+        if (!(grid instanceof Grid)) {
+            throw new Error('Grid must be a Grid object');
+        }
+        
+        // Check 4 adjacent squares (up, down, left, right)
+        const adjacentPositions = [
+            { x: x, y: y - 1 },     // Up
+            { x: x, y: y + 1 },     // Down
+            { x: x - 1, y: y },     // Left
+            { x: x + 1, y: y }      // Right
+        ];
+        
+        for (const pos of adjacentPositions) {
+            // Check if position is within grid bounds
+            if (pos.x >= 0 && pos.x < grid.width && pos.y >= 0 && pos.y < grid.height) {
+                const adjacentSquare = grid.getSquare(pos.x, pos.y);
+                if (adjacentSquare && adjacentSquare.state === SquareState.BLACK_PROTECTED) {
+                    // Change the color to red for this protected square
+                    adjacentSquare.color = 'red';
+                }
+            }
+        }
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { 
+            grid: grid,
+            x: x,
+            y: y
+        });
+    }
+}
+
 function updateSquareState(grid, x, y, newState) {
     try {
         if (!(grid instanceof Grid)) {
@@ -146,6 +186,12 @@ function updateSquareState(grid, x, y, newState) {
         // Validate state transition
         if (!isValidStateTransition(square.state, newState)) {
             throw new Error('Invalid state transition');
+        }
+        
+        // Check if we're carving a BLACK_CARVEABLE square
+        if (square.state === SquareState.BLACK_CARVEABLE && newState === SquareState.WHITE_CARVED) {
+            // Check adjacent squares and change BLACK_PROTECTED to red
+            checkAdjacentSquaresForProtected(grid, x, y);
         }
         
         // Update the square state
@@ -489,24 +535,32 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                     const pixelX = offsetX + (x * squareSize);
                     const pixelY = offsetY + (y * squareSize);
                     
-                    // Set color based on square state
-                    switch (square.state) {
-                        case SquareState.BLACK_CARVEABLE:
-                            fill(0); // Black - carveable background
-                            break;
-                        case SquareState.BLACK_PROTECTED:
-                            // fill(255, 0, 0); // Red - protected text (for debugging)
-                            fill(0); // Black - protected text
-                            break;
-                        case SquareState.WHITE_CARVED:
-                            fill(255); // White - carved area
-                            break;
-                        case SquareState.WHITE_EDGE:
-                            fill(255); // White - edge padding
-                            // fill(0); // Black - edge padding
-                            break;
-                        default:
-                            fill(128); // Gray for unknown states
+                    // Set color based on square color property or default state color
+                    if (square.color) {
+                        // Use custom color if set
+                        if (square.color === 'red') {
+                            fill(255, 0, 0); // Red
+                        } else {
+                            fill(square.color); // Use the color string directly
+                        }
+                    } else {
+                        // Use default state-based colors
+                        switch (square.state) {
+                            case SquareState.BLACK_CARVEABLE:
+                                fill(0); // Black - carveable background
+                                break;
+                            case SquareState.BLACK_PROTECTED:
+                                fill(0); // Black - protected text
+                                break;
+                            case SquareState.WHITE_CARVED:
+                                fill(255); // White - carved area
+                                break;
+                            case SquareState.WHITE_EDGE:
+                                fill(255); // White - edge padding
+                                break;
+                            default:
+                                fill(128); // Gray for unknown states
+                        }
                     }
                     
                     // Draw the square a bit bigger to avoid pixel imperfection
@@ -530,6 +584,7 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
 if (typeof window !== 'undefined') {
     window.createGrid = createGrid;
     window.updateSquareState = updateSquareState;
+    window.checkAdjacentSquaresForProtected = checkAdjacentSquaresForProtected;
     window.isValidStateTransition = isValidStateTransition;
     window.getSquareAtPixel = getSquareAtPixel;
     window.getSquarePixelCoordinates = getSquarePixelCoordinates;
@@ -547,6 +602,7 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         createGrid,
         updateSquareState,
+        checkAdjacentSquaresForProtected,
         isValidStateTransition,
         getSquareAtPixel,
         getSquarePixelCoordinates,

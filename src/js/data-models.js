@@ -84,11 +84,12 @@ class BlackWhiteImage {
  * Square - Individual grid cell that can be black (carveable), black (protected), or white (carved/edge)
  */
 class Square {
-    constructor(x, y, state, type) {
+    constructor(x, y, state, type, color = null) {
         this.x = x;
         this.y = y;
         this.state = state;
         this.type = type;
+        this.color = color; // Custom color for rendering (null = use default state color)
         
         this.validate();
     }
@@ -105,6 +106,9 @@ class Square {
         }
         if (!Object.values(SquareType).includes(this.type)) {
             throw new Error('Invalid square type');
+        }
+        if (this.color !== null && typeof this.color !== 'string') {
+            throw new Error('Color must be null or a string');
         }
     }
     
