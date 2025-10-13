@@ -50,6 +50,7 @@ function castRay(startX, startY, angle, grid, maxDistance, gridRenderingParams) 
             throw new Error('Max distance must be a positive number');
         }
         
+        const originalSquare = getSquareAtPixel(grid, startX, startY, gridRenderingParams);
         const intersections = [];
         
         // Calculate ray direction
@@ -58,7 +59,7 @@ function castRay(startX, startY, angle, grid, maxDistance, gridRenderingParams) 
         
         // Step along the ray
         const stepSize = 1; // 1 pixel steps
-        let distance = 0;
+        let distance = stepSize;
         
         while (distance < maxDistance) {
             const x = startX + dx * distance;
@@ -67,7 +68,7 @@ function castRay(startX, startY, angle, grid, maxDistance, gridRenderingParams) 
             // Get the square at this position
             const square = getSquareAtPixel(grid, x, y, gridRenderingParams);
             
-            if (square) {
+            if (square && square !== originalSquare && square.state !== SquareState.WHITE_CARVED && square.state !== SquareState.WHITE_EDGE) {
                 // Found an intersection
                 intersections.push({
                     x: x,
@@ -75,11 +76,7 @@ function castRay(startX, startY, angle, grid, maxDistance, gridRenderingParams) 
                     distance: distance,
                     square: square
                 });
-                
-                // If we hit a protected square, stop the ray
-                if (square.state === 'BLACK_PROTECTED') {
-                    break;
-                }
+                break;
             }
             
             distance += stepSize;
@@ -119,6 +116,8 @@ function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult, gri
         if (typeof deviationRange !== 'number' || deviationRange <= 0) {
             throw new Error('Deviation range must be a positive number');
         }
+
+        // console.log('findOptimalBounceAngle');
         
         // Get current ball angle and calculate proper reflection
         const currentAngle = ball.getAngle();
@@ -167,13 +166,14 @@ function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult, gri
             for (const testAngle of angles) {
                 // Cast ray at this angle to see what it hits
                 const rayResult = castRay(ball.x, ball.y, testAngle, grid, 100, gridRenderingParams);
-                
                 // Check if this ray hits a carveable square
                 if (rayResult.intersections && rayResult.intersections.length > 0) {
                     for (const intersection of rayResult.intersections) {
                         if (intersection.square && intersection.square.state === 'BLACK_CARVEABLE') {
+                            // console.log('ray square', rayResult.intersections[0].square, 'distance:', rayResult.intersections[0].distance);
                             // Found a good angle that hits a carveable square
                             const deviationDegrees = (deviation * 180) / Math.PI;
+                            // console.log('hit carveable square. smart angle:', testAngle, 'perfect angle:', perfectReflection, 'deviation:', deviationDegrees);
                             return new BounceAngle(testAngle, true, deviationDegrees, intersection);
                         }
                     }
@@ -185,6 +185,7 @@ function findOptimalBounceAngle(ball, grid, deviationRange, collisionResult, gri
         const randomDeviation = (Math.random() - 0.5) * 2 * deviationRange;
         const randomAngle = perfectReflection + (randomDeviation * Math.PI / 180);
         
+        // console.log('no optimal angle found. random angle:', randomAngle, 'perfect angle:', perfectReflection, 'deviation:', randomDeviation);
         return new BounceAngle(randomAngle, false, randomDeviation, null);
         
     } catch (error) {
