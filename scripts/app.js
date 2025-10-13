@@ -2,6 +2,8 @@
   const input = document.getElementById('text-input');
   const startNewBtn = document.getElementById('start-new-btn');
   const statusEl = document.getElementById('status');
+  const fontSizeSlider = document.getElementById('font-size');
+  const fontSizeValue = document.getElementById('font-size-value');
 
   // const ALLOWED_REGEX = /^[a-z0-9 \n]+$/; // lowercase letters, digits, space, newlines
   const ALLOWED_REGEX = /^[\s\S]*$/; // allow all characters
@@ -13,6 +15,14 @@
 
   function setStatus(message){
     statusEl.textContent = message || '';
+  }
+
+  // Initialize font size control
+  if (fontSizeSlider && fontSizeValue) {
+    fontSizeValue.textContent = fontSizeSlider.value;
+    fontSizeSlider.addEventListener('input', function(){
+      fontSizeValue.textContent = fontSizeSlider.value;
+    });
   }
 
   function displayGrayscaleImage(width, height, pixels) {
@@ -149,7 +159,7 @@
       // First, measure the text to determine proper canvas size
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
-      const fontSize = 20;
+      const fontSize = fontSizeSlider ? parseInt(fontSizeSlider.value, 10) : 20;
       tempCtx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
       tempCtx.textAlign = 'left';
       tempCtx.textBaseline = 'bottom';
