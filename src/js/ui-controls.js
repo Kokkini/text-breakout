@@ -4,6 +4,384 @@
  */
 
 /**
+ * Check if viewer mode is enabled via URL parameter
+ */
+function isViewerMode() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewerParam = urlParams.get('viewer');
+        return viewerParam === 'true' || viewerParam === '1';
+    } catch (error) {
+        console.error('Error checking viewer mode:', error);
+        return false;
+    }
+}
+
+/**
+ * Enter viewer mode (hide controls, show only animation)
+ */
+function enterViewerMode() {
+    try {
+        // Hide the form
+        const form = document.getElementById('text-form');
+        if (form) {
+            form.style.display = 'none';
+        }
+        
+        // Hide the subtitle
+        const subtitle = document.querySelector('.subtitle');
+        if (subtitle) {
+            subtitle.style.display = 'none';
+        }
+        
+        // Create and show "Create your own" button
+        const container = document.querySelector('.container');
+        if (container && !document.getElementById('create-own-btn')) {
+            const createOwnBtn = document.createElement('button');
+            createOwnBtn.id = 'create-own-btn';
+            createOwnBtn.type = 'button';
+            createOwnBtn.textContent = 'Create your own';
+            createOwnBtn.className = 'create-own-button';
+            createOwnBtn.addEventListener('click', exitViewerMode);
+            
+            // Insert after the h1 title
+            const title = container.querySelector('h1');
+            if (title && title.nextSibling) {
+                container.insertBefore(createOwnBtn, title.nextSibling);
+            } else if (title) {
+                title.parentNode.insertBefore(createOwnBtn, title.nextSibling);
+            }
+        }
+        
+        console.log('Entered viewer mode');
+        
+    } catch (error) {
+        console.error('Error entering viewer mode:', error);
+    }
+}
+
+/**
+ * Exit viewer mode (show controls without reloading)
+ */
+function exitViewerMode() {
+    try {
+        // Show the form
+        const form = document.getElementById('text-form');
+        if (form) {
+            form.style.display = 'block';
+        }
+        
+        // Show the subtitle
+        const subtitle = document.querySelector('.subtitle');
+        if (subtitle) {
+            subtitle.style.display = 'block';
+        }
+        
+        // Remove "Create your own" button
+        const createOwnBtn = document.getElementById('create-own-btn');
+        if (createOwnBtn) {
+            createOwnBtn.remove();
+        }
+        
+        // Animation continues running - no need to stop it
+        
+        console.log('Exited viewer mode - controls now visible');
+        
+    } catch (error) {
+        console.error('Error exiting viewer mode:', error);
+    }
+}
+
+/**
+ * Load configuration from URL parameters
+ */
+function loadConfigFromURL() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Parse URL parameters (support multiple naming conventions)
+        const config = {
+            ballCount: urlParams.get('ballCount') || urlParams.get('balls') || urlParams.get('numBalls'),
+            deviationAngle: urlParams.get('deviationAngle') || urlParams.get('deviation') || urlParams.get('angle'),
+            movementSpeed: urlParams.get('movementSpeed') || urlParams.get('speed'),
+            fontSize: urlParams.get('fontSize') || urlParams.get('textResolution') || urlParams.get('resolution'),
+            text: urlParams.get('text')
+        };
+        
+        // Check if we should enter viewer mode
+        const viewerMode = isViewerMode();
+        
+        // Apply parameters if they exist and are valid
+        let paramsApplied = false;
+        
+        // Ball count
+        if (config.ballCount) {
+            const ballCount = parseInt(config.ballCount);
+            if (!isNaN(ballCount) && ballCount >= 1 && ballCount <= 50) {
+                const ballCountSlider = document.getElementById('ball-count');
+                if (ballCountSlider) {
+                    ballCountSlider.value = ballCount;
+                    if (animationParameters) {
+                        animationParameters.ballCount = ballCount;
+                    }
+                    paramsApplied = true;
+                }
+            }
+        }
+        
+        // Deviation angle
+        if (config.deviationAngle) {
+            const deviationAngle = parseInt(config.deviationAngle);
+            if (!isNaN(deviationAngle) && deviationAngle >= 1 && deviationAngle <= 45) {
+                const deviationAngleSlider = document.getElementById('deviation-angle');
+                if (deviationAngleSlider) {
+                    deviationAngleSlider.value = deviationAngle;
+                    if (animationParameters) {
+                        animationParameters.deviationAngle = deviationAngle;
+                    }
+                    paramsApplied = true;
+                }
+            }
+        }
+        
+        // Movement speed
+        if (config.movementSpeed) {
+            const movementSpeed = parseFloat(config.movementSpeed);
+            if (!isNaN(movementSpeed) && movementSpeed >= 0.1 && movementSpeed <= 5.0) {
+                const movementSpeedSlider = document.getElementById('movement-speed');
+                if (movementSpeedSlider) {
+                    movementSpeedSlider.value = movementSpeed;
+                    if (animationParameters) {
+                        animationParameters.movementSpeed = movementSpeed;
+                    }
+                    paramsApplied = true;
+                }
+            }
+        }
+        
+        // Font size
+        if (config.fontSize) {
+            const fontSize = parseInt(config.fontSize);
+            if (!isNaN(fontSize) && fontSize >= 8 && fontSize <= 120) {
+                const fontSizeSlider = document.getElementById('font-size');
+                if (fontSizeSlider) {
+                    fontSizeSlider.value = fontSize;
+                    paramsApplied = true;
+                }
+            }
+        }
+        
+        // Text input
+        if (config.text) {
+            const textInput = document.getElementById('text-input');
+            if (textInput) {
+                textInput.value = decodeURIComponent(config.text);
+                paramsApplied = true;
+            }
+        }
+        
+        // Update displays if any parameters were applied
+        if (paramsApplied) {
+            updateParameterDisplays();
+            console.log('Configuration loaded from URL parameters');
+        }
+        
+        // Enter viewer mode if viewer=true parameter is set
+        if (viewerMode) {
+            enterViewerMode();
+            
+            // Auto-start animation after a short delay to ensure everything is loaded
+            setTimeout(() => {
+                // Trigger the start animation using the global onAnimate function
+                if (typeof window.onAnimate === 'function') {
+                    window.onAnimate();
+                } else {
+                    // Fallback: click the start button programmatically
+                    const startBtn = document.getElementById('start-new-btn');
+                    if (startBtn) {
+                        startBtn.click();
+                    }
+                }
+            }, 1600); // Wait a bit longer to ensure fonts are loaded
+        }
+        
+    } catch (error) {
+        console.error('Error loading config from URL:', error);
+        // Don't throw - just continue with defaults
+    }
+}
+
+/**
+ * Generate URL with current configuration
+ */
+function generateConfigURL() {
+    try {
+        const baseUrl = window.location.origin + window.location.pathname;
+        const params = new URLSearchParams();
+        
+        // Add viewer=true for clean sharing experience
+        params.set('viewer', 'true');
+        
+        // Add current parameter values
+        const ballCountSlider = document.getElementById('ball-count');
+        if (ballCountSlider) {
+            params.set('balls', ballCountSlider.value);
+        }
+        
+        const deviationAngleSlider = document.getElementById('deviation-angle');
+        if (deviationAngleSlider) {
+            params.set('deviation', deviationAngleSlider.value);
+        }
+        
+        const movementSpeedSlider = document.getElementById('movement-speed');
+        if (movementSpeedSlider) {
+            params.set('speed', movementSpeedSlider.value);
+        }
+        
+        const fontSizeSlider = document.getElementById('font-size');
+        if (fontSizeSlider) {
+            params.set('fontSize', fontSizeSlider.value);
+        }
+        
+        const textInput = document.getElementById('text-input');
+        if (textInput && textInput.value.trim()) {
+            params.set('text', encodeURIComponent(textInput.value.trim()));
+        }
+        
+        return `${baseUrl}?${params.toString()}`;
+        
+    } catch (error) {
+        console.error('Error generating config URL:', error);
+        return window.location.href;
+    }
+}
+
+/**
+ * Copy sharable URL to clipboard
+ */
+function copyConfigURL() {
+    try {
+        const url = generateConfigURL();
+        
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+                console.log('Sharable URL copied to clipboard');
+                // Optionally show a notification to the user
+                showNotification('Sharable URL copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy URL:', err);
+                fallbackCopyURL(url);
+            });
+        } else {
+            fallbackCopyURL(url);
+        }
+        
+    } catch (error) {
+        console.error('Error copying sharable URL:', error);
+    }
+}
+
+/**
+ * Fallback method to copy URL
+ */
+function fallbackCopyURL(url) {
+    try {
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        try {
+            document.execCommand('copy');
+            console.log('Sharable URL copied to clipboard (fallback method)');
+            showNotification('Sharable URL copied to clipboard!');
+        } catch (err) {
+            console.error('Fallback copy failed:', err);
+            showNotification('Failed to copy URL. Please copy manually: ' + url);
+        }
+        
+        document.body.removeChild(textArea);
+        
+    } catch (error) {
+        console.error('Error in fallback copy:', error);
+    }
+}
+
+/**
+ * Show a notification to the user
+ */
+function showNotification(message, duration = 3000) {
+    try {
+        // Remove existing notification
+        const existingNotification = document.querySelector('.url-notification');
+        if (existingNotification) {
+            existingNotification.remove();
+        }
+        
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = 'url-notification';
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10000;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out;
+        `;
+        
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(notification);
+        
+        // Auto-remove after duration
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, duration);
+        
+    } catch (error) {
+        console.error('Error showing notification:', error);
+    }
+}
+
+/**
  * Initialize UI controls and event listeners
  */
 function initializeUIControls() {
@@ -16,6 +394,9 @@ function initializeUIControls() {
         
         // Set up text input validation
         setupTextInputValidation();
+        
+        // Load configuration from URL parameters
+        loadConfigFromURL();
         
         // Initialize parameter displays
         updateParameterDisplays();
@@ -102,6 +483,12 @@ function setupButtonControls() {
         const resetBtn = document.getElementById('clear-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', resetAnimation);
+        }
+        
+        // Share config button
+        const shareConfigBtn = document.getElementById('share-config-btn');
+        if (shareConfigBtn) {
+            shareConfigBtn.addEventListener('click', copyConfigURL);
         }
         
     } catch (error) {
@@ -497,6 +884,13 @@ if (typeof module !== 'undefined' && module.exports) {
         applyParameterPreset,
         getCurrentParameters,
         setParameters,
-        showParameterTooltips
+        showParameterTooltips,
+        loadConfigFromURL,
+        generateConfigURL,
+        copyConfigURL,
+        showNotification,
+        isViewerMode,
+        enterViewerMode,
+        exitViewerMode
     };
 }

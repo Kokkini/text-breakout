@@ -27,6 +27,9 @@
 - Q: How should the canvas size be determined for text rendering? → A: Canvas size should be dynamically calculated based on the actual text dimensions to maintain proper aspect ratio and prevent text distortion
 - Q: How should white space around text be minimized? → A: Canvas should have minimal padding around the text to maximize text visibility and reduce unnecessary white space
 - Q: What should happen when balls hit protected squares (text)? → A: Balls should bounce off protected squares normally without being destroyed, maintaining the text pattern as a solid obstacle that deflects balls
+- Q: How should users share their custom animations with others? → A: Implement URL parameter support with a "Share" button that generates shareable URLs containing all configuration (viewer mode, ball count, deviation, speed, font size, text)
+- Q: What display modes should be supported for shared URLs? → A: Support viewer mode (`viewer=true`) for clean presentation with auto-start and a "Create your own" button, and editor mode (`viewer=false` or omitted) with full controls visible
+- Q: How should the transition from viewer to editor mode work? → A: Clicking "Create your own" reveals controls without reloading the page or stopping the animation, providing seamless transition
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -93,10 +96,31 @@ Users want to customize the animation parameters to control the carving speed an
 2. **Given** a user has customized animation settings, **When** the animation starts, **Then** it uses the specified number of balls, deviation angle, and movement speed
 3. **Given** a user wants to reset to defaults, **When** they click a reset button, **Then** the settings return to default values for all parameters
 
+---
+
+### User Story 5 - Configuration Sharing (Priority: P5)
+
+Users want to share their custom animations with others via URL parameters, with options for clean viewer mode or editable configurations.
+
+**Why this priority**: This enables social sharing and collaboration, allowing users to showcase their creations and let others remix them.
+
+**Independent Test**: Can be fully tested by generating a shareable URL, opening it in a new browser window, and verifying the configuration is applied correctly.
+
+**Acceptance Scenarios**:
+
+1. **Given** a user has configured animation settings and text, **When** they click the "Share" button, **Then** a URL with all configuration parameters is copied to their clipboard
+2. **Given** a user opens a shared URL with `viewer=true`, **When** the page loads, **Then** only the animation and title are visible with a "Create your own" button
+3. **Given** a user is in viewer mode, **When** they click "Create your own", **Then** the controls appear without reloading the page while the animation continues
+4. **Given** a user opens a shared URL with `viewer=false`, **When** the page loads, **Then** all controls are visible with the shared configuration pre-loaded
+5. **Given** a user opens a URL with configuration parameters, **When** the page loads, **Then** the animation settings are applied from URL parameters (balls, deviation, speed, fontSize, text)
+
 ### Edge Cases
 
 - What happens when all balls get destroyed and no new balls can spawn effectively? → Use ray casting from remaining carveable squares to find viable spawn positions
-- What happens if the text pattern has isolated black squares that are hard to reach? → Mark as protected if all adjacent squares are protected, otherwise assume reachable 
+- What happens if the text pattern has isolated black squares that are hard to reach? → Mark as protected if all adjacent squares are protected, otherwise assume reachable
+- What happens when URL parameters contain invalid values? → Validate all parameters and fall back to default values for any invalid or out-of-range parameters
+- What happens when a URL has configuration parameters but no viewer parameter? → Show full interface with controls, pre-loading the configuration from URL parameters
+- What happens if clipboard access is denied when clicking "Share"? → Use fallback method (document.execCommand) and show appropriate error notification if both methods fail 
 
 ## Requirements *(mandatory)*
 
@@ -130,6 +154,14 @@ Users want to customize the animation parameters to control the carving speed an
 - **FR-026**: System MUST provide a simplified user workflow where users input text and directly start animation without a separate convert step
 - **FR-027**: System MUST dynamically calculate canvas dimensions based on actual text measurements to maintain proper aspect ratio and prevent text distortion
 - **FR-028**: System MUST minimize white space around text by using minimal padding to maximize text visibility and reduce unnecessary canvas area
+- **FR-029**: System MUST support URL parameters for configuration sharing, including: viewer mode (`viewer`), ball count (`balls`/`ballCount`/`numBalls`), deviation angle (`deviation`/`deviationAngle`/`angle`), movement speed (`speed`/`movementSpeed`), font size (`fontSize`/`textResolution`/`resolution`), and text content (`text`)
+- **FR-030**: System MUST provide a "Share" button that generates a shareable URL with `viewer=true` and current configuration parameters, copying it to the user's clipboard
+- **FR-031**: System MUST enter viewer mode when `viewer=true` is present in URL parameters, hiding all controls and showing only the animation canvas, title, and a "Create your own" button
+- **FR-032**: System MUST auto-start the animation when in viewer mode with the configuration from URL parameters
+- **FR-033**: System MUST reveal all controls when the "Create your own" button is clicked in viewer mode, without reloading the page or stopping the animation
+- **FR-034**: System MUST show all controls with pre-loaded configuration when `viewer=false` is in URL parameters or when URL parameters are present without a viewer parameter
+- **FR-035**: System MUST validate URL parameter values and ignore invalid parameters, falling back to defaults for missing or invalid values
+- **FR-036**: System MUST support multiple naming conventions for URL parameters (e.g., `balls`, `ballCount`, `numBalls`) for user convenience
 
 ### Key Entities *(include if feature involves data)*
 
@@ -146,6 +178,10 @@ Users want to customize the animation parameters to control the carving speed an
 - **Animation State**: Current progress of the carving process and ball management
 - **Animation Parameters**: User-configurable settings including ball count (default 20), deviation angle (default 20 degrees), and movement speed (default customizable)
 - **Eutopia Font**: Custom font file (assets/Eutopia/Eutopia.otf) used for text rendering to maintain consistent typography with character images
+- **URL Configuration**: Configuration data encoded in URL parameters for sharing animations (viewer mode, ball count, deviation angle, movement speed, font size, text content)
+- **Viewer Mode**: Display mode controlled by `viewer=true` URL parameter that shows only animation with a "Create your own" button, hiding all controls initially
+- **Editor Mode**: Display mode when `viewer=false` or viewer parameter is omitted, showing full interface with controls pre-loaded from URL parameters
+- **Share Button**: UI control that generates a shareable URL with `viewer=true` and current configuration, copying it to clipboard with visual feedback
 
 ## Success Criteria *(mandatory)*
 
@@ -159,3 +195,7 @@ Users want to customize the animation parameters to control the carving speed an
 - **SC-006**: Users can successfully start animation directly from text input without requiring a separate convert step
 - **SC-007**: Canvas dimensions are dynamically calculated to maintain proper text aspect ratio without distortion for any text length or content
 - **SC-008**: Text canvas has minimal white space around the text to maximize text visibility and reduce unnecessary canvas area
+- **SC-009**: Users can successfully generate and copy shareable URLs with their custom configurations 100% of the time
+- **SC-010**: Shared URLs with `viewer=true` successfully load in viewer mode (clean view without controls) and auto-start the animation
+- **SC-011**: Clicking "Create your own" in viewer mode reveals controls without page reload or animation interruption 100% of the time
+- **SC-012**: URL parameter configurations are accurately applied to animation settings with proper validation and fallback to defaults for invalid values

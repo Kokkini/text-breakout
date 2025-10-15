@@ -1,6 +1,21 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!--
+      URL Parameters Support:
+      You can configure the animation via URL parameters:
+      - viewer: Set to 'true' for viewer mode (hides controls initially, auto-starts animation)
+      - balls (or ballCount, numBalls): Number of balls (1-50)
+      - deviation (or deviationAngle, angle): Deviation angle in degrees (1-45)
+      - speed (or movementSpeed): Movement speed multiplier (0.1-5.0)
+      - fontSize (or textResolution, resolution): Text resolution (8-120)
+      - text: The text to display (URL encoded)
+      
+      Viewer mode example: ?viewer=true&balls=30&deviation=20&speed=1.5&fontSize=40&text=Hello
+      Editor mode example: ?viewer=false&balls=30&deviation=20&speed=1.5&fontSize=40&text=Hello
+      
+      Note: In viewer mode, clicking "Create your own" reveals controls without reloading the page.
+    -->
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-80BW084NES"></script>
     <script>
@@ -36,7 +51,7 @@
       <p class="subtitle">Watch balls carve out your text!</p>
       
       <form id="text-form" aria-describedby="status" onsubmit="return false;">
-        <label for="text-input">Enter text to carve:</label>
+        <label for="text-input">Enter text to carve (can be multiple lines):</label>
         <textarea id="text-input" name="text" rows="3" cols="50" maxlength="200" placeholder="Enter your text here...&#10;You can use multiple lines!"></textarea>
         
         <div class="animation-controls">
@@ -66,6 +81,7 @@
         
         <div class="actions">
           <button id="start-new-btn" type="button">Start New</button>
+          <button id="share-config-btn" type="button" title="Copy a shareable URL with current settings">Share</button>
         </div>
       </form>
 

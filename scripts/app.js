@@ -365,14 +365,29 @@
   });
 
   // Init
-  // Set default text and start animation automatically
-  input.value = 'Hello\nWorld!';
+  // Check if URL has any configuration params
+  function hasAnyURLParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const relevantParams = ['ballCount', 'balls', 'numBalls', 'deviationAngle', 'deviation', 
+                            'angle', 'movementSpeed', 'speed', 'fontSize', 'textResolution', 
+                            'resolution', 'text', 'viewer'];
+    for (const param of relevantParams) {
+      if (urlParams.has(param)) return true;
+    }
+    return false;
+  }
   
-  // Start animation automatically after a short delay to ensure everything is loaded
-  setTimeout(() => {
-    console.log('Auto-starting animation with default text: Hello\\nWorld!');
-    onAnimate();
-  }, 1500);
+  // Only set default text and auto-start if no URL params are present
+  if (!hasAnyURLParams()) {
+    // Set default text and start animation automatically
+    input.value = 'Hello\nWorld!';
+    
+    // Start animation automatically after a short delay to ensure everything is loaded
+    setTimeout(() => {
+      console.log('Auto-starting animation with default text: Hello\\nWorld!');
+      onAnimate();
+    }, 1500);
+  }
   
   // Check font loading after a short delay
   setTimeout(() => {
