@@ -34,9 +34,19 @@ function enterViewerMode() {
             subtitle.style.display = 'none';
         }
         
-        // Create and show "Create your own" button
-        const container = document.querySelector('.container');
-        if (container && !document.getElementById('create-own-btn')) {
+        // Change the h1 title to "You've got a message"
+        const title = document.querySelector('h1');
+        if (title) {
+            // Store original title for restoration
+            if (!title.dataset.originalText) {
+                title.dataset.originalText = title.textContent;
+            }
+            title.textContent = "You've got a message";
+        }
+        
+        // Create and show "Create your own" button below the canvas
+        const animationContainer = document.querySelector('.animation-container');
+        if (animationContainer && !document.getElementById('create-own-btn')) {
             const createOwnBtn = document.createElement('button');
             createOwnBtn.id = 'create-own-btn';
             createOwnBtn.type = 'button';
@@ -44,12 +54,11 @@ function enterViewerMode() {
             createOwnBtn.className = 'create-own-button';
             createOwnBtn.addEventListener('click', exitViewerMode);
             
-            // Insert after the h1 title
-            const title = container.querySelector('h1');
-            if (title && title.nextSibling) {
-                container.insertBefore(createOwnBtn, title.nextSibling);
-            } else if (title) {
-                title.parentNode.insertBefore(createOwnBtn, title.nextSibling);
+            // Insert after the animation container
+            if (animationContainer.nextSibling) {
+                animationContainer.parentNode.insertBefore(createOwnBtn, animationContainer.nextSibling);
+            } else {
+                animationContainer.parentNode.appendChild(createOwnBtn);
             }
         }
         
@@ -75,6 +84,13 @@ function exitViewerMode() {
         const subtitle = document.querySelector('.subtitle');
         if (subtitle) {
             subtitle.style.display = 'block';
+        }
+        
+        // Restore original title
+        const title = document.querySelector('h1');
+        if (title && title.dataset.originalText) {
+            title.textContent = title.dataset.originalText;
+            delete title.dataset.originalText;
         }
         
         // Remove "Create your own" button

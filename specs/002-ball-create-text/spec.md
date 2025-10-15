@@ -109,8 +109,8 @@ Users want to share their custom animations with others via URL parameters, with
 **Acceptance Scenarios**:
 
 1. **Given** a user has configured animation settings and text, **When** they click the "Share" button, **Then** a URL with all configuration parameters is copied to their clipboard
-2. **Given** a user opens a shared URL with `viewer=true`, **When** the page loads, **Then** only the animation and title are visible with a "Create your own" button
-3. **Given** a user is in viewer mode, **When** they click "Create your own", **Then** the controls appear without reloading the page while the animation continues
+2. **Given** a user opens a shared URL with `viewer=true`, **When** the page loads, **Then** the title changes to "You've got a message", only the animation canvas and title are visible, and a "Create your own" button is displayed below the canvas
+3. **Given** a user is in viewer mode, **When** they click "Create your own", **Then** the title restores to the original text and controls appear without reloading the page while the animation continues
 4. **Given** a user opens a shared URL with `viewer=false`, **When** the page loads, **Then** all controls are visible with the shared configuration pre-loaded
 5. **Given** a user opens a URL with configuration parameters, **When** the page loads, **Then** the animation settings are applied from URL parameters (balls, deviation, speed, fontSize, text)
 
@@ -156,9 +156,9 @@ Users want to share their custom animations with others via URL parameters, with
 - **FR-028**: System MUST minimize white space around text by using minimal padding to maximize text visibility and reduce unnecessary canvas area
 - **FR-029**: System MUST support URL parameters for configuration sharing, including: viewer mode (`viewer`), ball count (`balls`/`ballCount`/`numBalls`), deviation angle (`deviation`/`deviationAngle`/`angle`), movement speed (`speed`/`movementSpeed`), font size (`fontSize`/`textResolution`/`resolution`), and text content (`text`)
 - **FR-030**: System MUST provide a "Share" button that generates a shareable URL with `viewer=true` and current configuration parameters, copying it to the user's clipboard
-- **FR-031**: System MUST enter viewer mode when `viewer=true` is present in URL parameters, hiding all controls and showing only the animation canvas, title, and a "Create your own" button
+- **FR-031**: System MUST enter viewer mode when `viewer=true` is present in URL parameters, changing the title to "You've got a message", hiding all controls, and showing only the animation canvas, title, and a "Create your own" button below the canvas
 - **FR-032**: System MUST auto-start the animation when in viewer mode with the configuration from URL parameters
-- **FR-033**: System MUST reveal all controls when the "Create your own" button is clicked in viewer mode, without reloading the page or stopping the animation
+- **FR-033**: System MUST reveal all controls and restore the original title when the "Create your own" button is clicked in viewer mode, without reloading the page or stopping the animation
 - **FR-034**: System MUST show all controls with pre-loaded configuration when `viewer=false` is in URL parameters or when URL parameters are present without a viewer parameter
 - **FR-035**: System MUST validate URL parameter values and ignore invalid parameters, falling back to defaults for missing or invalid values
 - **FR-036**: System MUST support multiple naming conventions for URL parameters (e.g., `balls`, `ballCount`, `numBalls`) for user convenience

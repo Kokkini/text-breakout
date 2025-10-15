@@ -63,8 +63,9 @@ The `viewer` parameter controls the display mode:
 
 **When `viewer=true`:**
 - Animation automatically starts with the specified settings
+- Title changes to "You've got a message"
 - Only the animation canvas and title are visible
-- A "Create your own" button is displayed
+- A "Create your own" button is displayed below the canvas
 - Clicking "Create your own" reveals the controls while keeping the animation running
 - Provides a clean, distraction-free viewing experience
 

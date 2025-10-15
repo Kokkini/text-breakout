@@ -571,10 +571,10 @@ function drawWelcomeMessage() {
         fill(100);
         textAlign(CENTER, CENTER);
         textSize(24);
-        text('Enter text above and click "Start Animation"', canvasWidth / 2, canvasHeight / 2);
+        text('Loading...', canvasWidth / 2, canvasHeight / 2);
         
-        textSize(16);
-        text('Watch as balls carve out your text!', canvasWidth / 2, canvasHeight / 2 + 40);
+        // textSize(16);
+        // text('Watch as balls carve out your text!', canvasWidth / 2, canvasHeight / 2 + 40);
         
     } catch (error) {
         globalErrorHandler.handleError(error, { context: 'drawWelcomeMessage' });
