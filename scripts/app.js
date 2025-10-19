@@ -160,7 +160,10 @@
       const tempCanvas = document.createElement('canvas');
       const tempCtx = tempCanvas.getContext('2d');
       const fontSize = fontSizeSlider ? parseInt(fontSizeSlider.value, 10) : 20;
-      tempCtx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
+      const fontModifier = 'bold';
+      // const fontFamily = 'Eutopia, Arial, sans-serif';
+      const fontFamily = 'Arial, sans-serif';
+      tempCtx.font = fontModifier ? `${fontModifier} ${fontSize}px ${fontFamily}` : `${fontSize}px ${fontFamily}`;
       tempCtx.textAlign = 'left';
       tempCtx.textBaseline = 'bottom';
       
@@ -168,7 +171,8 @@
       const lines = text.split('\n');
       const SPACE_GAP = 6 * fontSize / 20;
       const CHAR_GAP = 2 * fontSize / 20;
-      const LINE_HEIGHT = fontSize * 0.8; // Reduced from 1.2 to 1.0 for tighter line spacing
+      // const LINE_HEIGHT = fontSize * 0.8; // for Eutopia
+      const LINE_HEIGHT = fontSize * 1.2; // for Arial
       
       // Calculate dimensions for each line
       let maxLineWidth = 0;
@@ -220,16 +224,15 @@
       canvas.width = canvasWidth;
       canvas.height = canvasHeight;
 
-      // Generate new text image using Eutopia font
-      console.log('onAnimate: Generating new text image with Eutopia font');
+      console.log('onAnimate: Generating new text image');
 
     // Fill white background
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Set text properties with Eutopia font
+      // Set text properties
       ctx.fillStyle = '#000000';
-      ctx.font = `${fontSize}px Eutopia, Arial, sans-serif`;
+      ctx.font = fontModifier ? `${fontModifier} ${fontSize}px ${fontFamily}` : `${fontSize}px ${fontFamily}`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';
       
@@ -266,7 +269,7 @@
       } else {
         if (prevWasImage) x += CHAR_GAP;
             
-            // Draw the character using Eutopia font
+            // Draw the character
             ctx.fillText(ch, x, y);
             
             // Get character width

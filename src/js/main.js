@@ -120,6 +120,7 @@ let animationParameters = null;
 let canvasWidth = 800;
 let canvasHeight = 600;
 let gridRenderingParams = null; // Will store current grid rendering parameters
+let islands = []; // Store detected islands for completion checking
 
 /**
  * p5.js setup function - called once when the program starts
@@ -254,6 +255,15 @@ function updateAnimation() {
         // Update all balls
         const updateResults = updateAllBalls(animationState.balls, grid, gridRenderingParams, animationParameters);
         
+        // Check and complete islands
+        if (islands && islands.length > 0) {
+            if (typeof updateIslands === 'function') {
+                updateIslands(grid, islands);
+            } else if (typeof window.updateIslands === 'function') {
+                window.updateIslands(grid, islands);
+            }
+        }
+        
         // Update animation state
         animationState.ballsActive = getActiveBalls(animationState.balls).length;
         animationState.carveableSquaresRemaining = countSquaresByState(grid, SquareState.BLACK_CARVEABLE);
@@ -368,6 +378,16 @@ function startAnimation(imageData) {
 
         // Mark isolated carveable squares as protected
         markIsolatedCarveableAsProtected(grid);
+        
+        // Initialize islands for loop detection and completion
+        if (typeof initializeIslands === 'function') {
+            islands = initializeIslands(grid);
+        } else if (typeof window.initializeIslands === 'function') {
+            islands = window.initializeIslands(grid);
+        } else {
+            console.warn('initializeIslands function not available');
+            islands = [];
+        }
         
         // Initialize animation state
         animationState = new AnimationState(
@@ -494,6 +514,7 @@ function resetAnimation() {
         // Clear state
         animationState = null;
         grid = null;
+        islands = [];
         
         // Reset UI - use correct element IDs from existing HTML
         const textInput = document.getElementById('text-input');

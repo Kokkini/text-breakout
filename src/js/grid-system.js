@@ -591,8 +591,11 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                     const pixelX = offsetX + (x * squareSize);
                     const pixelY = offsetY + (y * squareSize);
                     
-                    // Set color based on square color property or default state color
-                    if (square.color) {
+                    // Set color based on square properties (flashColor > color > state)
+                    if (square.flashColor) {
+                        // Use flash color if actively flashing
+                        fill(square.flashColor);
+                    } else if (square.color) {
                         // Use custom color if set
                         if (square.color === 'red') {
                             // fill(255, 0, 0); // Red
@@ -638,6 +641,429 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
     }
 }
 
+/**
+ * Flood fill from edges to find all reachable squares
+ * @param {Grid} grid - Grid to analyze
+ * @returns {Set} Set of reachable square keys "x,y"
+ */
+function findReachableSquares(grid) {
+    try {
+        const reachable = new Set();
+        const queue = [];
+        
+        // Start flood fill from all WHITE_EDGE squares (the outer padding)
+        for (let y = 0; y < grid.height; y++) {
+            for (let x = 0; x < grid.width; x++) {
+                const square = grid.getSquare(x, y);
+                if (square && square.state === SquareState.WHITE_EDGE) {
+                    const key = `${x},${y}`;
+                    reachable.add(key);
+                    queue.push({x, y});
+                }
+            }
+        }
+        
+        // Flood fill to find all reachable squares
+        while (queue.length > 0) {
+            const {x, y} = queue.shift();
+            
+            // Check 4-directional neighbors (not diagonals for flood fill)
+            const neighbors = [
+                {x: x, y: y - 1},     // Up
+                {x: x, y: y + 1},     // Down
+                {x: x - 1, y: y},     // Left
+                {x: x + 1, y: y}      // Right
+            ];
+            
+            for (const neighbor of neighbors) {
+                const {x: nx, y: ny} = neighbor;
+                const key = `${nx},${ny}`;
+                
+                if (reachable.has(key)) continue; // Already visited
+                
+                const square = grid.getSquare(nx, ny);
+                if (!square) continue; // Out of bounds
+                
+                // Can reach through WHITE_CARVED and BLACK_CARVEABLE squares
+                // BLACK_PROTECTED blocks the flood fill
+                if (square.state === SquareState.WHITE_CARVED || 
+                    square.state === SquareState.BLACK_CARVEABLE) {
+                    reachable.add(key);
+                    queue.push({x: nx, y: ny});
+                }
+            }
+        }
+        
+        return reachable;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid });
+        return new Set();
+    }
+}
+
+/**
+ * Find all islands (unreachable regions) in the grid
+ * @param {Grid} grid - Grid to analyze
+ * @param {Set} reachable - Set of reachable square keys
+ * @returns {Array} Array of islands, each island is an array of {x, y} coordinates
+ */
+function findIslands(grid, reachable) {
+    try {
+        const islands = [];
+        const visited = new Set();
+        
+        // Find all unreachable squares
+        for (let y = 0; y < grid.height; y++) {
+            for (let x = 0; x < grid.width; x++) {
+                const key = `${x},${y}`;
+                const square = grid.getSquare(x, y);
+                
+                if (!square) continue;
+                if (visited.has(key)) continue;
+                if (reachable.has(key)) continue; // Skip reachable squares
+                
+                // This square is unreachable - start a new island
+                if (square.state === SquareState.BLACK_CARVEABLE || 
+                    square.state === SquareState.BLACK_PROTECTED) {
+                    
+                    const island = [];
+                    const queue = [{x, y}];
+                    visited.add(key);
+                    
+                    // Flood fill to find all squares in this island
+                    while (queue.length > 0) {
+                        const {x: cx, y: cy} = queue.shift();
+                        island.push({x: cx, y: cy});
+                        
+                        // Check 4-directional neighbors
+                        const neighbors = [
+                            {x: cx, y: cy - 1},
+                            {x: cx, y: cy + 1},
+                            {x: cx - 1, y: cy},
+                            {x: cx + 1, y: cy}
+                        ];
+                        
+                        for (const neighbor of neighbors) {
+                            const {x: nx, y: ny} = neighbor;
+                            const nKey = `${nx},${ny}`;
+                            
+                            if (visited.has(nKey)) continue;
+                            if (reachable.has(nKey)) continue;
+                            
+                            const nSquare = grid.getSquare(nx, ny);
+                            if (!nSquare) continue;
+                            
+                            // Add to island if it's black (carveable or protected)
+                            if (nSquare.state === SquareState.BLACK_CARVEABLE || 
+                                nSquare.state === SquareState.BLACK_PROTECTED) {
+                                visited.add(nKey);
+                                queue.push({x: nx, y: ny});
+                            }
+                        }
+                    }
+                    
+                    if (island.length > 0) {
+                        islands.push(island);
+                    }
+                }
+            }
+        }
+        
+        return islands;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid });
+        return [];
+    }
+}
+
+/**
+ * Find the boundary of an island (carveable squares that enclose it)
+ * @param {Grid} grid - Grid object
+ * @param {Array} island - Array of {x, y} coordinates in the island
+ * @returns {Set} Set of boundary square keys "x,y"
+ */
+function findIslandBoundary(grid, island) {
+    try {
+        const boundary = new Set();
+        const islandSet = new Set(island.map(({x, y}) => `${x},${y}`));
+        
+        // For each square in the island, check its neighbors
+        for (const {x, y} of island) {
+            const neighbors = [
+                {x: x, y: y - 1},
+                {x: x, y: y + 1},
+                {x: x - 1, y: y},
+                {x: x + 1, y: y}
+            ];
+            
+            for (const neighbor of neighbors) {
+                const {x: nx, y: ny} = neighbor;
+                const key = `${nx},${ny}`;
+                
+                // Skip if already in island
+                if (islandSet.has(key)) continue;
+                
+                const square = grid.getSquare(nx, ny);
+                if (!square) continue;
+                
+                // Boundary squares are BLACK_CARVEABLE squares adjacent to the island
+                if (square.state === SquareState.BLACK_CARVEABLE) {
+                    boundary.add(key);
+                }
+            }
+        }
+        
+        return boundary;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid, island: island });
+        return new Set();
+    }
+}
+
+/**
+ * Initialize islands for a grid
+ * @param {Grid} grid - Grid to analyze
+ * @returns {Array} Array of island objects with squares and boundary
+ */
+function initializeIslands(grid) {
+    try {
+        console.log('Initializing islands...');
+        const reachable = findReachableSquares(grid);
+        console.log('Reachable squares:', reachable.size);
+        
+        const islandRegions = findIslands(grid, reachable);
+        console.log('Found', islandRegions.length, 'islands');
+        
+        const islands = islandRegions.map((region, index) => {
+            const boundary = findIslandBoundary(grid, region);
+            console.log(`Island ${index}: ${region.length} squares, boundary: ${boundary.size} squares`);
+            return {
+                id: index,
+                squares: region,
+                boundary: boundary,
+                completed: false
+            };
+        });
+        
+        return islands;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid });
+        return [];
+    }
+}
+
+/**
+ * Check if an island's boundary is fully carved
+ * @param {Grid} grid - Grid object
+ * @param {Object} island - Island object with boundary set
+ * @returns {boolean} True if all boundary squares are carved
+ */
+function isIslandBoundaryCarved(grid, island) {
+    try {
+        if (island.completed) return true;
+        
+        for (const key of island.boundary) {
+            const [x, y] = key.split(',').map(Number);
+            const square = grid.getSquare(x, y);
+            
+            if (!square) continue;
+            
+            // If any boundary square is still BLACK_CARVEABLE, not complete
+            if (square.state === SquareState.BLACK_CARVEABLE) {
+                return false;
+            }
+        }
+        
+        return true;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid, island: island });
+        return false;
+    }
+}
+
+/**
+ * Start the completion animation for an island
+ * @param {Grid} grid - Grid object
+ * @param {Object} island - Island object with squares array
+ */
+function startIslandCompletionAnimation(grid, island) {
+    try {
+        console.log(`Starting completion animation for island ${island.id} with ${island.squares.length} squares`);
+        
+        // Sort squares from left to right, top to bottom
+        const sortedSquares = [...island.squares].sort((a, b) => {
+            if (a.y !== b.y) return a.y - b.y; // Top to bottom
+            return a.x - b.x; // Left to right
+        });
+        
+        // Initialize animation state
+        island.animating = true;
+        island.animationIndex = 0;
+        island.sortedSquares = sortedSquares;
+        island.flashFrame = 0; // 0 = not flashing, 1-2 = flash frames
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid, island: island });
+    }
+}
+
+/**
+ * Process one frame of island completion animation
+ * @param {Grid} grid - Grid object
+ * @param {Object} island - Island object with animation state
+ * @returns {boolean} True if animation is complete
+ */
+function updateIslandCompletionAnimation(grid, island) {
+    try {
+        if (!island.animating || !island.sortedSquares) {
+            return true;
+        }
+        
+        // Check if we're done
+        if (island.animationIndex >= island.sortedSquares.length) {
+            island.animating = false;
+            island.completed = true;
+            console.log(`Island ${island.id} completion animation finished`);
+            return true;
+        }
+        
+        const {x, y} = island.sortedSquares[island.animationIndex];
+        const square = grid.getSquare(x, y);
+        
+        if (!square) {
+            island.animationIndex++;
+            return false;
+        }
+        
+        // Handle flashing for protected squares
+        if (square.state === SquareState.BLACK_PROTECTED) {
+            if (island.flashFrame === 0) {
+                // Start flash - change to yellow
+                square.flashColor = '#FFD700'; // Gold/yellow color
+                island.flashFrame = 1;
+                return false;
+            } else if (island.flashFrame === 1) {
+                // Flash frame 1
+                island.flashFrame = 2;
+                return false;
+            } else if (island.flashFrame === 2) {
+                // Flash frame 2
+                island.flashFrame = 3;
+                return false;
+            } else {
+                // End flash - change to red
+                square.flashColor = null;
+                square.color = 'red';
+                island.flashFrame = 0;
+                island.animationIndex++;
+                return false;
+            }
+        } else if (square.state === SquareState.WHITE_CARVED) {
+            // Already carved - skip immediately
+            island.animationIndex++;
+            return false;
+        } else if (square.state === SquareState.BLACK_CARVEABLE) {
+            // Carve this square with same timing as protected (no visual flash, just timing)
+            if (island.flashFrame === 0) {
+                // Frame 0 - start delay
+                island.flashFrame = 1;
+                return false;
+            } else if (island.flashFrame === 1) {
+                // Frame 1 - delay
+                island.flashFrame = 2;
+                return false;
+            } else if (island.flashFrame === 2) {
+                // Frame 2 - delay
+                island.flashFrame = 3;
+                return false;
+            } else {
+                // Frame 3 - carve the square
+                updateSquareState(grid, x, y, SquareState.WHITE_CARVED);
+                island.flashFrame = 0;
+                island.animationIndex++;
+                return false;
+            }
+        } else {
+            // Unknown state - skip
+            island.animationIndex++;
+            return false;
+        }
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid, island: island });
+        return true;
+    }
+}
+
+/**
+ * Complete an island by turning protected squares red and carving carveable squares
+ * This is the legacy instant completion function, replaced by animated version
+ * @param {Grid} grid - Grid object
+ * @param {Object} island - Island object with squares array
+ */
+function completeIslandInstant(grid, island) {
+    try {
+        console.log(`Completing island ${island.id} with ${island.squares.length} squares`);
+        
+        for (const {x, y} of island.squares) {
+            const square = grid.getSquare(x, y);
+            if (!square) continue;
+            
+            if (square.state === SquareState.BLACK_PROTECTED) {
+                // Turn protected squares red
+                square.color = 'red';
+            } else if (square.state === SquareState.BLACK_CARVEABLE) {
+                // Carve carveable squares
+                updateSquareState(grid, x, y, SquareState.WHITE_CARVED);
+            }
+        }
+        
+        island.completed = true;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid, island: island });
+    }
+}
+
+/**
+ * Update islands each frame - check for completion and animate
+ * @param {Grid} grid - Grid object
+ * @param {Array} islands - Array of island objects
+ * @returns {number} Number of islands completed this frame
+ */
+function updateIslands(grid, islands) {
+    try {
+        let completedCount = 0;
+        
+        for (const island of islands) {
+            if (island.completed) continue;
+            
+            // If island is animating, process animation
+            if (island.animating) {
+                updateIslandCompletionAnimation(grid, island);
+                continue;
+            }
+            
+            // Check if island boundary is fully carved
+            if (isIslandBoundaryCarved(grid, island)) {
+                startIslandCompletionAnimation(grid, island);
+                completedCount++;
+            }
+        }
+        
+        return completedCount;
+        
+    } catch (error) {
+        globalErrorHandler.handleError(error, { grid: grid, islands: islands });
+        return 0;
+    }
+}
+
 // Make functions available globally for browser usage
 if (typeof window !== 'undefined') {
     window.createGrid = createGrid;
@@ -656,6 +1082,15 @@ if (typeof window !== 'undefined') {
     window.markIsolatedCarveableAsProtected = markIsolatedCarveableAsProtected;
     window.drawGrid = drawGrid;
     window.getGridRenderingParams = getGridRenderingParams;
+    window.findReachableSquares = findReachableSquares;
+    window.findIslands = findIslands;
+    window.findIslandBoundary = findIslandBoundary;
+    window.initializeIslands = initializeIslands;
+    window.isIslandBoundaryCarved = isIslandBoundaryCarved;
+    window.startIslandCompletionAnimation = startIslandCompletionAnimation;
+    window.updateIslandCompletionAnimation = updateIslandCompletionAnimation;
+    window.completeIslandInstant = completeIslandInstant;
+    window.updateIslands = updateIslands;
 }
 
 // Export for use in other modules (Node.js)
@@ -676,6 +1111,15 @@ if (typeof module !== 'undefined' && module.exports) {
         isAdjacentToSquareType,
         markIsolatedCarveableAsProtected,
         drawGrid,
-        getGridRenderingParams
+        getGridRenderingParams,
+        findReachableSquares,
+        findIslands,
+        findIslandBoundary,
+        initializeIslands,
+        isIslandBoundaryCarved,
+        startIslandCompletionAnimation,
+        updateIslandCompletionAnimation,
+        completeIslandInstant,
+        updateIslands
     };
 }

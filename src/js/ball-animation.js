@@ -147,6 +147,26 @@ function updateBallPositionWithSubstepping(ball, grid, gridRenderingParams) {
 }
 
 /**
+ * Get 8 adjacent squares around a given position
+ * @param {Grid} grid - Grid object
+ * @param {number} currentX - Current X coordinate in grid units
+ * @param {number} currentY - Current Y coordinate in grid units
+ * @returns {Array} Array of 8 adjacent squares (may contain nulls for out-of-bounds)
+ */
+function getAdjacentSquares(grid, currentX, currentY) {
+    return [
+        getSquareAtGrid(grid, currentX, currentY - 1), // Up
+        getSquareAtGrid(grid, currentX, currentY + 1), // Down
+        getSquareAtGrid(grid, currentX - 1, currentY), // Left
+        getSquareAtGrid(grid, currentX + 1, currentY), // Right
+        getSquareAtGrid(grid, currentX - 1, currentY - 1), // Up-Left
+        getSquareAtGrid(grid, currentX - 1, currentY + 1), // Down-Left
+        getSquareAtGrid(grid, currentX + 1, currentY - 1), // Up-Right
+        getSquareAtGrid(grid, currentX + 1, currentY + 1) // Down-Right
+    ];
+}
+
+/**
  * Update ball position with sub-stepping and pre-collision checking
  * This function checks for collisions BEFORE updating ball position
  * @param {Ball} ball - Ball to update
@@ -181,20 +201,6 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
                      square.y === 0 || square.y === grid.height - 1));
         }
         
-        // Helper function to get 8 adjacent squares
-        function getAdjacentSquares(currentX, currentY) {
-            return [
-                getSquareAtGrid(grid, currentX, currentY - 1), // Up
-                getSquareAtGrid(grid, currentX, currentY + 1), // Down
-                getSquareAtGrid(grid, currentX - 1, currentY), // Left
-                getSquareAtGrid(grid, currentX + 1, currentY), // Right
-                getSquareAtGrid(grid, currentX - 1, currentY - 1), // Up-Left
-                getSquareAtGrid(grid, currentX - 1, currentY + 1), // Down-Left
-                getSquareAtGrid(grid, currentX + 1, currentY - 1), // Up-Right
-                getSquareAtGrid(grid, currentX + 1, currentY + 1) // Down-Right
-            ];
-        }
-        
         // If movement is small enough, use simple pre-collision check
         if (movementDistance <= maxSafeDistance) {
             // Calculate next position
@@ -214,7 +220,7 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
             // If next position would be in a collide-able square, check for collision
             if (isCollideable(nextSquare)) {
                 // Get adjacent squares to current position
-                const adjacentSquares = getAdjacentSquares(ball.x, ball.y);
+                const adjacentSquares = getAdjacentSquares(grid, ball.x, ball.y);
                 
                 // Check ray intersection with each collide-able adjacent square
                 for (const adjacentSquare of adjacentSquares) {
@@ -317,7 +323,7 @@ function updateBallPositionWithSubsteppingAndPreCollisionCheck(ball, grid, gridR
             // If next position would be in a collide-able square, check for collision
             if (isCollideable(nextSquare)) {
                 // Get adjacent squares to current position
-                const adjacentSquares = getAdjacentSquares(ball.x, ball.y);
+                const adjacentSquares = getAdjacentSquares(grid, ball.x, ball.y);
                 
                 // Check ray intersection with each collide-able adjacent square
                 for (const adjacentSquare of adjacentSquares) {
@@ -733,6 +739,23 @@ function handleBallCollision(ball, collisionResult, grid, gridRenderingParams, a
             return { success: true, action: 'carved', square: square };
             
         } else if (shouldBounce) {
+            // Check if this is a protected square (not an edge)
+            // if (!collisionResult.isEdge && square.state === SquareState.BLACK_PROTECTED) {
+            //     // Get 8 adjacent squares and carve any BLACK_CARVEABLE squares
+            //     const adjacentSquares = getAdjacentSquares(grid, square.x, square.y);
+                
+            //     // Turn all BLACK_CARVEABLE adjacent squares to WHITE_CARVED
+            //     for (const adjSquare of adjacentSquares) {
+            //         if (adjSquare && adjSquare.state === SquareState.BLACK_CARVEABLE) {
+            //             updateSquareState(grid, adjSquare.x, adjSquare.y, SquareState.WHITE_CARVED);
+            //         }
+            //         else if (adjSquare && adjSquare.state === SquareState.BLACK_PROTECTED) {
+            //             // change the color to red
+            //             adjSquare.color = 'red';
+            //         }
+            //     }
+            // }
+            
             // Bounce the ball - use appropriate bounce function based on collision type
             if (collisionResult.isEdge) {
                 bounceBallOffEdgeSmart(ball, collisionResult, grid, gridRenderingParams, animationParameters);

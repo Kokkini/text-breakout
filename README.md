@@ -75,6 +75,39 @@ The `viewer` parameter controls the display mode:
 - Users can modify settings and start/stop the animation
 - Perfect for sharing configurations that others can customize
 
+## Carving Algorithm
+
+The animation uses an intelligent island detection system to handle character loops (like in 'A', 'O', 'P', 'R', etc.):
+
+### How It Works
+
+1. **Flood Fill Detection** (at game start):
+   - Performs flood fill from edge squares to identify all reachable areas
+   - Unreachable regions (enclosed by text) are identified as "islands"
+   - Each island can contain both protected (text) and carveable squares
+
+2. **Boundary Detection**:
+   - For each island, calculates the boundary (carveable squares that enclose it)
+   - These boundary squares act as the "doorway" to the island
+
+3. **Island Completion** (animated):
+   - Monitors if all boundary squares have been carved
+   - When an island's boundary is fully carved, triggers an animated completion:
+     - Sweeps through island squares from **left-to-right, top-to-bottom**
+     - Protected squares flash **gold** for 3 frames, then turn **red**
+     - Carveable squares are carved to white (with matching timing)
+     - Already carved squares are skipped immediately
+   - Creates a satisfying visual reveal effect showing the island being completed
+   - Ensures all areas are eventually reachable
+
+### Visual Feedback
+
+- **Black**: Carveable area (can be carved by balls)
+- **Gray**: Protected text pattern (balls bounce off)
+- **White**: Carved area (balls pass through)
+- **Gold Flash**: Protected squares being revealed during island completion
+- **Red**: Completed protected text (island completed or adjacent carving)
+
 ## Project Structure
 ```
 ├── index.html
