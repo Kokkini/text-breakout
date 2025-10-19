@@ -965,7 +965,7 @@ function spawnNewBall(grid, parameters, gridRenderingParams) {
         }
         
         // Calculate ball diameter in grid units (half of a square)
-        const ballDiameter = 0.5;
+        const ballDiameter = 0.7;
         
         // Find a random edge position
         const edgePositions = getEdgePositions(grid);
