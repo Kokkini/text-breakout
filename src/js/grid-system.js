@@ -595,7 +595,9 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                     if (square.color) {
                         // Use custom color if set
                         if (square.color === 'red') {
-                            fill(255, 0, 0); // Red
+                            // fill(255, 0, 0); // Red
+                            // #ff8c00
+                            fill('#ff8c00');
                         } else {
                             fill(square.color); // Use the color string directly
                         }
