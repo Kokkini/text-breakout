@@ -151,8 +151,8 @@ function checkAdjacentSquaresForProtected(grid, x, y) {
             if (pos.x >= 0 && pos.x < grid.width && pos.y >= 0 && pos.y < grid.height) {
                 const adjacentSquare = grid.getSquare(pos.x, pos.y);
                 if (adjacentSquare && adjacentSquare.state === SquareState.BLACK_PROTECTED) {
-                    // Change the color to red for this protected square
-                    adjacentSquare.color = 'red';
+                // Change the color to red for this protected square
+                adjacentSquare.color = COLORS.RED_COLOR;
                 }
             }
         }
@@ -600,7 +600,7 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                         if (square.color === 'red') {
                             // fill(255, 0, 0); // Red
                             // #ff8c00
-                            fill('#ff8c00');
+                            fill(COLORS.PROTECTED_COLOR);
                         } else {
                             fill(square.color); // Use the color string directly
                         }
@@ -608,19 +608,19 @@ function drawGrid(grid, canvasWidth, canvasHeight) {
                         // Use default state-based colors
                         switch (square.state) {
                             case SquareState.BLACK_CARVEABLE:
-                                fill(0); // Black - carveable background
+                                fill(COLORS.BLACK); // Black - carveable background
                                 break;
                             case SquareState.BLACK_PROTECTED:
-                                fill(0); // Black - protected text
+                                fill(COLORS.BLACK); // Black - protected text
                                 break;
                             case SquareState.WHITE_CARVED:
-                                fill(255); // White - carved area
+                                fill(COLORS.WHITE); // White - carved area
                                 break;
                             case SquareState.WHITE_EDGE:
-                                fill(255); // White - edge padding
+                                fill(COLORS.WHITE); // White - edge padding
                                 break;
                             default:
-                                fill(128); // Gray for unknown states
+                                fill(COLORS.GRAY); // Gray for unknown states
                         }
                     }
                     
@@ -944,7 +944,7 @@ function updateIslandCompletionAnimation(grid, island) {
         if (square.state === SquareState.BLACK_PROTECTED) {
             if (island.flashFrame === 0) {
                 // Start flash - change to yellow
-                square.flashColor = '#FFD700'; // Gold/yellow color
+                square.flashColor = COLORS.FLASH_COLOR; // Gold/yellow color
                 island.flashFrame = 1;
                 return false;
             } else if (island.flashFrame === 1) {
@@ -958,7 +958,7 @@ function updateIslandCompletionAnimation(grid, island) {
             } else {
                 // End flash - change to red
                 square.flashColor = null;
-                square.color = 'red';
+                square.color = COLORS.RED_COLOR;
                 island.flashFrame = 0;
                 island.animationIndex++;
                 return false;
@@ -1016,7 +1016,7 @@ function completeIslandInstant(grid, island) {
             
             if (square.state === SquareState.BLACK_PROTECTED) {
                 // Turn protected squares red
-                square.color = 'red';
+                square.color = COLORS.RED_COLOR;
             } else if (square.state === SquareState.BLACK_CARVEABLE) {
                 // Carve carveable squares
                 updateSquareState(grid, x, y, SquareState.WHITE_CARVED);

@@ -162,9 +162,9 @@ function draw() {
     try {
         // Clear background - grey during animation, white otherwise
         if (animationState && animationState.isRunning) {
-            background(0); // Grey background during animation
+            background(COLORS.BACKGROUND_ANIMATING); // Grey background during animation
         } else {
-            background(255); // White background when not animating
+            background(COLORS.BACKGROUND_STATIC); // White background when not animating
         }
         
         if (animationState && animationState.isRunning) {
@@ -589,7 +589,7 @@ function updateStatus(message, type = 'normal') {
  */
 function drawWelcomeMessage() {
     try {
-        fill(100);
+        fill(COLORS.WELCOME_TEXT);
         textAlign(CENTER, CENTER);
         textSize(24);
         text('Loading...', canvasWidth / 2, canvasHeight / 2);

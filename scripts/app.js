@@ -227,11 +227,11 @@
       console.log('onAnimate: Generating new text image');
 
     // Fill white background
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = COLORS.TEXT_WHITE;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Set text properties
-      ctx.fillStyle = '#000000';
+      ctx.fillStyle = COLORS.TEXT_BLACK;
       ctx.font = fontModifier ? `${fontModifier} ${fontSize}px ${fontFamily}` : `${fontSize}px ${fontFamily}`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'bottom';

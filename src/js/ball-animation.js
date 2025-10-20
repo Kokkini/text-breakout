@@ -1150,7 +1150,7 @@ function drawBalls(balls) {
                     pixelY = offsetY + ball.y * squareSize;
                     pixelDiameter = ball.diameter * squareSize;
                 }
-                fill(0);
+                fill(COLORS.BALL_COLOR);
                 noStroke();
                 ellipse(pixelX, pixelY, pixelDiameter, pixelDiameter);
             }
