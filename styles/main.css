@@ -25,8 +25,8 @@ button:focus{outline:2px solid #58a6ff;outline-offset:2px}
 #share-config-btn::before{content:'↗';display:inline-block;margin-right:8px;font-size:0.95em;line-height:1}
 .output{margin-top:24px;padding:16px;min-height:120px}
 #image-output{display:flex;align-items:flex-end;gap:var(--gap);flex-wrap:nowrap;overflow:auto;padding:8px;margin-bottom:16px}
-.animation-container{min-height:400px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#0a0e16;position:relative}
-.animation-container canvas{border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+.animation-container{min-height:300px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#0a0e16;position:relative;overflow:hidden}
+.animation-container canvas{border-radius:6px;box-shadow:0 4px 20px rgba(0,0,0,0.3);max-width:100%;height:auto;display:block}
 .char{display:inline-block}
 .visually-hidden{position:absolute !important;height:1px;width:1px;overflow:hidden;clip:rect(1px, 1px, 1px, 1px);clip-path:inset(50%);white-space:nowrap}
 .animating #convert-btn{display:none}

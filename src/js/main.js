@@ -123,10 +123,32 @@ let gridRenderingParams = null; // Will store current grid rendering parameters
 let islands = []; // Store detected islands for completion checking
 
 /**
+ * Get responsive canvas dimensions based on container size
+ */
+function getResponsiveCanvasDimensions() {
+    const container = document.getElementById('animation-container');
+    if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const maxWidth = Math.min(800, containerRect.width - 32); // 32px for padding
+        const maxHeight = Math.min(600, maxWidth * 600 / 800); // Max 60% of viewport height
+        return {
+            width: Math.max(300, maxWidth), // Minimum 300px width
+            height: Math.max(300, maxHeight) // Minimum 300px height
+        };
+    }
+    return { width: 800, height: 600 };
+}
+
+/**
  * p5.js setup function - called once when the program starts
  */
 function setup() {
     try {
+        // Get responsive dimensions
+        const dimensions = getResponsiveCanvasDimensions();
+        canvasWidth = dimensions.width;
+        canvasHeight = dimensions.height;
+        
         // Create canvas
         const canvas = createCanvas(canvasWidth, canvasHeight);
         canvas.parent('animation-container');
@@ -607,15 +629,16 @@ function drawWelcomeMessage() {
  */
 function windowResized() {
     try {
-        // Adjust canvas size to fit container
-        const container = document.getElementById('canvas-container');
-        if (container) {
-            const containerRect = container.getBoundingClientRect();
-            canvasWidth = Math.min(1000, containerRect.width - 20);
-            canvasHeight = Math.min(800, containerRect.height - 20);
-            
-            resizeCanvas(canvasWidth, canvasHeight);
-        }
+        // Get new responsive dimensions
+        const dimensions = getResponsiveCanvasDimensions();
+        canvasWidth = dimensions.width;
+        canvasHeight = dimensions.height;
+        
+        // Resize canvas
+        resizeCanvas(canvasWidth, canvasHeight);
+        
+        // Reset grid rendering parameters to recalculate for new size
+        gridRenderingParams = null;
         
     } catch (error) {
         globalErrorHandler.handleError(error, { context: 'windowResized' });
